@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Bloqueia acesso ao .env por segurança extra
+    <Files .env>
+        Order allow,deny
+        Deny from all
+    </Files>
+
+    # Encaminha quem acessa o domínio direto para a public_html
+    RewriteRule ^$ public_html/ [L]
+    
+    # Encaminha o restante das requisições silenciosamente
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/public_html/
+    RewriteRule ^(.*)$ public_html/$1 [L]
+</IfModule>

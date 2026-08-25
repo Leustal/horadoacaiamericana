@@ -122,11 +122,15 @@
         }
 
         // Função para finalizar o pedido
+        // Função para finalizar o pedido e enviar pro WhatsApp
         function finalizarPedido() {
             const nome = document.getElementById('cli-nome').value.trim();
             const whatsapp = document.getElementById('cli-whatsapp').value.trim();
             const endereco = document.getElementById('cli-endereco').value.trim();
-            const pagamento = document.getElementById('cli-pagamento').value;
+            
+            // Pega o texto da opção de pagamento (ex: "PIX (Mais rápido)")
+            const selectPagamento = document.getElementById('cli-pagamento');
+            const pagamento = selectPagamento.options[selectPagamento.selectedIndex].text;
 
             // Validação simples
             if (!nome || !whatsapp || !endereco) {
@@ -134,11 +138,50 @@
                 return;
             }
 
-            alert(`Pedido pronto para ser enviado!\nNome: ${nome}\nTotal de itens: ${carrinho.length}\nEm breve integraremos isso!`);
-        }
+            // ⚠️ COLOQUE AQUI O NÚMERO DA SUA LOJA ⚠️
+            // Formato: DDI + DDD + Número (apenas números)
+            // Exemplo para Americana (DDI 55, DDD 19): 5519999999999
+            const numeroLoja = "5519993857689"; 
 
-        // Roda a função assim que a tela abre
-        document.addEventListener('DOMContentLoaded', carregarCarrinho);
+            // 1. Monta o cabeçalho da mensagem
+            let textoMsg = `🟣 *NOVO PEDIDO - HORA DO AÇAÍ* 🟣\n\n`;
+            textoMsg += `*Cliente:* ${nome}\n`;
+            textoMsg += `*Contato:* ${whatsapp}\n`;
+            textoMsg += `*Endereço de Entrega:* ${endereco}\n\n`;
+            textoMsg += `*🛒 ITENS DO PEDIDO:*\n`;
+
+            // 2. Adiciona os itens do carrinho
+            let total = 0;
+            carrinho.forEach((item, index) => {
+                total += item.precoTotal;
+                
+                let txtAdicionais = item.adicionais.length > 0 
+                    ? item.adicionais.map(a => a.nome).join(', ') 
+                    : 'Sem complementos';
+
+                textoMsg += `\n${index + 1}. *${item.nome} (${item.tamanhoNome})*\n`;
+                textoMsg += `   ▫️ Adicionais: ${txtAdicionais}\n`;
+                textoMsg += `   ▫️ Valor: R$ ${item.precoTotal.toFixed(2).replace('.', ',')}\n`;
+            });
+
+            // 3. Adiciona o rodapé com total e pagamento
+            textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
+            textoMsg += `*💳 Forma de Pagamento:* ${pagamento}\n`;
+            textoMsg += `*💰 TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
+
+            // 4. Converte o texto para formato de URL (Link)
+            const textoCodificado = encodeURIComponent(textoMsg);
+            const linkWhatsApp = `https://wa.me/${numeroLoja}?text=${textoCodificado}`;
+
+            // 5. Opcional: Limpa o carrinho após fechar o pedido
+            localStorage.removeItem('carrinhoAcai');
+
+            // 6. Abre o WhatsApp em uma nova aba
+            window.open(linkWhatsApp, '_blank');
+            
+            // Recarrega a página para limpar a tela
+            window.location.href = 'index.html';
+        }
     </script>
 </body>
 </html>

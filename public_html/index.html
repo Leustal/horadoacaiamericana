@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hora do Açaí Americana</title>
+    <style>
+        /* CSS Básico - Estilo Mobile First */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f5;
+            color: #333;
+            /* Centraliza em telas grandes parecendo um app */
+            max-width: 500px; 
+            margin: 0 auto;
+            background: #fff;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Cabeçalho Roxo Açaí */
+        header {
+            background-color: #4b0082; /* Cor de açaí */
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+        }
+
+        /* Menu de Categorias (Rolagem Horizontal) */
+        .categorias-menu {
+            display: flex;
+            overflow-x: auto;
+            background: #fff;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            gap: 15px;
+            position: sticky;
+            top: 68px;
+            z-index: 99;
+        }
+
+        .categorias-menu::-webkit-scrollbar {
+            display: none; 
+        }
+
+        .btn-categoria {
+            background: #f0f0f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #555;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-categoria.ativo {
+            background: #4b0082;
+            color: white;
+        }
+
+        /* Container onde os produtos vão aparecer */
+        #cardapio-container {
+            padding: 15px;
+            padding-bottom: 80px; 
+        }
+
+        /* Estilo dos Cards de Produto */
+        .produto-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .produto-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #4b0082;
+        }
+
+        .produto-info p {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        .produto-preco {
+            font-weight: bold;
+            color: #2e8b57;
+        }
+
+        /* ----- ESTILOS DO MODAL ----- */
+        #fundo-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        #modal-produto {
+            position: fixed;
+            bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 100%; max-width: 500px;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            z-index: 1001;
+            max-height: 85vh;
+            overflow-y: auto;
+            transition: bottom 0.3s ease-out;
+        }
+
+        .escondido {
+            display: none !important;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-fechar {
+            background: none; border: none;
+            font-size: 1.5rem; color: #777; cursor: pointer;
+        }
+
+        .opcao-radio {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .btn-adicionar-carrinho {
+            width: 100%;
+            background: #4b0082; color: white;
+            padding: 15px; border: none; border-radius: 8px;
+            font-size: 1.1rem; font-weight: bold;
+            margin-top: 20px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🟣 Hora do Açaí</h1>
+    </header>
+
+    <nav class="categorias-menu" id="categorias-menu">
+        <button class="btn-categoria ativo">Carregando...</button>
+    </nav>
+
+    <main id="cardapio-container">
+        <p style="text-align: center; margin-top: 20px;">Buscando as delícias do cardápio...</p>
+    </main>
+
+    <!-- ----- MODAL DO PRODUTO ----- -->
+    <div id="fundo-modal" class="escondido" onclick="fecharModal()"></div>
+    <div id="modal-produto" class="escondido">
+        <div class="modal-header">
+            <h2 id="modal-titulo">Nome do Produto</h2>
+            <button onclick="fecharModal()" class="btn-fechar">X</button>
+        </div>
+        <p id="modal-descricao" style="color: #777; margin-bottom: 15px;"></p>
+        
+        <h3>1. Escolha o Tamanho</h3>
+        <div id="modal-tamanhos">
+            <!-- Tamanhos serão injetados aqui -->
+        </div>
+
+        <h3 style="margin-top: 20px;">2. Complementos</h3>
+        <div id="modal-complementos">
+            <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Carregando adicionais...</p>
+        </div>
+
+        <button class="btn-adicionar-carrinho">Adicionar ao Carrinho</button>
+    </div>
+
+    <!-- Script para buscar na API e controlar a tela -->
+    <script>
+        async function carregarCardapio() {
+            try {
+                // Caminho ajustado para a nova topologia
+                const resposta = await fetch('http://localhost:8000/api/cardapio.php');
+                const cardapio = await resposta.json();
+
+                const menuCategorias = document.getElementById('categorias-menu');
+                const containerCardapio = document.getElementById('cardapio-container');
+
+                menuCategorias.innerHTML = '';
+                containerCardapio.innerHTML = '';
+
+                cardapio.forEach((categoria, index) => {
+                    // Menu
+                    const btnCategoria = document.createElement('button');
+                    btnCategoria.className = `btn-categoria ${index === 0 ? 'ativo' : ''}`;
+                    btnCategoria.innerText = categoria.categoria;
+                    
+                    btnCategoria.onclick = () => {
+                        document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('ativo'));
+                        btnCategoria.classList.add('ativo');
+                        document.getElementById(`categoria-${categoria.id}`).scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    };
+                    menuCategorias.appendChild(btnCategoria);
+
+                    // Seção de Produtos
+                    const secao = document.createElement('div');
+                    secao.id = `categoria-${categoria.id}`;
+                    secao.style.paddingTop = '80px'; 
+                    secao.style.marginTop = '-60px'; 
+                    
+                    secao.innerHTML = `<h2 style="margin-bottom: 10px; color: #4b0082; font-size: 1.3rem;">${categoria.categoria}</h2>`;
+
+                    categoria.produtos.forEach(produto => {
+                        const menorPreco = Math.min(...produto.tamanhos.map(t => t.preco));
+                        const precoFormatado = menorPreco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                        const cardProduto = document.createElement('div');
+                        cardProduto.className = 'produto-card';
+                        cardProduto.innerHTML = `
+                            <div class="produto-info">
+                                <h3>${produto.nome}</h3>
+                                <p>${produto.descricao}</p>
+                                <span class="produto-preco">A partir de ${precoFormatado}</span>
+                            </div>
+                        `;
+                        
+                        // Chama a função para abrir o modal ao invés do alert
+                        cardProduto.onclick = () => abrirModal(produto);
+
+                        secao.appendChild(cardProduto);
+                    });
+
+                    containerCardapio.appendChild(secao);
+                });
+
+            } catch (erro) {
+                console.error("Erro ao carregar o cardápio:", erro);
+                document.getElementById('cardapio-container').innerHTML = '<p style="color: red; text-align: center;">Erro ao carregar o cardápio.</p>';
+            }
+        }
+
+        // --- FUNÇÕES DO MODAL ---
+        function abrirModal(produto) {
+            document.getElementById('modal-titulo').innerText = produto.nome;
+            document.getElementById('modal-descricao').innerText = produto.descricao;
+            
+            const divTamanhos = document.getElementById('modal-tamanhos');
+            divTamanhos.innerHTML = ''; 
+
+            // Injeta os tamanhos dinamicamente
+            produto.tamanhos.forEach((t, index) => {
+                const label = document.createElement('label');
+                label.className = 'opcao-radio';
+                label.innerHTML = `
+                    <span>
+                        <input type="radio" name="tamanho" value="${t.id}" ${index === 0 ? 'checked' : ''}>
+                        ${t.tamanho}
+                    </span>
+                    <strong>+ R$ ${t.preco.toFixed(2).replace('.', ',')}</strong>
+                `;
+                divTamanhos.appendChild(label);
+            });
+
+            // Mostra o modal
+            document.getElementById('fundo-modal').classList.remove('escondido');
+            document.getElementById('modal-produto').classList.remove('escondido');
+        }
+
+        function fecharModal() {
+            document.getElementById('fundo-modal').classList.add('escondido');
+            document.getElementById('modal-produto').classList.add('escondido');
+        }
+
+        // Inicia o carregamento
+        document.addEventListener('DOMContentLoaded', carregarCardapio);
+    </script>
+</body>
+</html>

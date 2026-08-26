@@ -63,8 +63,6 @@
     </div>
 
     <script>
-        // O JavaScript vai aqui
-        // Puxa os itens salvos no navegador
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
 
         function carregarCarrinho() {
@@ -72,24 +70,21 @@
             const resumoTotal = document.getElementById('resumo-total');
             const formEntrega = document.getElementById('formulario-entrega');
             
-            container.innerHTML = ''; // Limpa a tela
+            container.innerHTML = ''; 
             let total = 0;
 
-            // Se o carrinho estiver vazio
             if (carrinho.length === 0) {
                 container.innerHTML = '<p class="vazio">Seu carrinho está vazio. 😕<br><br><a href="index.html" style="color: #4b0082; font-weight: bold;">Voltar ao Cardápio</a></p>';
                 resumoTotal.innerText = 'Total: R$ 0,00';
-                formEntrega.style.display = 'none'; // Esconde o formulário
+                formEntrega.style.display = 'none'; 
                 return;
             }
 
             formEntrega.style.display = 'block';
 
-            // Desenha cada item na tela
             carrinho.forEach((item, index) => {
                 total += item.precoTotal;
 
-                // Formata a lista de adicionais (se houver)
                 let txtAdicionais = item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
                     : 'Sem complementos';
@@ -110,78 +105,96 @@
                 container.appendChild(divItem);
             });
 
-            // Atualiza o valor total
             resumoTotal.innerText = 'Total: ' + total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        // Função para remover um item específico
         function removerItem(index) {
-            carrinho.splice(index, 1); // Remove 1 item na posição clicada
-            localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho)); // Salva o novo carrinho
-            carregarCarrinho(); // Recarrega a tela
+            carrinho.splice(index, 1);
+            localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
+            carregarCarrinho();
         }
 
-        // Função para finalizar o pedido
-        // Função para finalizar o pedido e enviar pro WhatsApp
-        function finalizarPedido() {
+        async function finalizarPedido() {
             const nome = document.getElementById('cli-nome').value.trim();
             const whatsapp = document.getElementById('cli-whatsapp').value.trim();
             const endereco = document.getElementById('cli-endereco').value.trim();
             
-            // Pega o texto da opção de pagamento (ex: "PIX (Mais rápido)")
             const selectPagamento = document.getElementById('cli-pagamento');
             const pagamento = selectPagamento.options[selectPagamento.selectedIndex].text;
 
-            // Validação simples
             if (!nome || !whatsapp || !endereco) {
                 alert("Por favor, preencha todos os dados de entrega para prosseguir!");
                 return;
             }
 
+            // Desativa o botão para evitar envios duplos
+            const btn = document.querySelector('.btn-finalizar');
+            btn.innerText = "Processando...";
+            btn.disabled = true;
+
+            let total = 0;
+            carrinho.forEach(item => total += item.precoTotal);
+
+            // 1. Salva o pedido no banco via API
+            let pedidoId = 'N/A';
+            try {
+                const resposta = await fetch('/api/pedidos.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cliente_nome: nome,
+                        cliente_telefone: whatsapp,
+                        endereco: endereco,
+                        forma_pagamento: pagamento,
+                        total: total,
+                        itens: carrinho
+                    })
+                });
+
+                const resultado = await resposta.json();
+                if (resultado.sucesso) {
+                    pedidoId = resultado.pedido_id;
+                }
+            } catch (erro) {
+                console.warn("Não foi possível salvar no banco, prosseguindo com o WhatsApp:", erro);
+            }
+
             // ⚠️ COLOQUE AQUI O NÚMERO DA SUA LOJA ⚠️
-            // Formato: DDI + DDD + Número (apenas números)
-            // Exemplo para Americana (DDI 55, DDD 19): 5519999999999
             const numeroLoja = "5519993857689"; 
 
-            // 1. Monta o cabeçalho da mensagem
-            let textoMsg = `🟣 *NOVO PEDIDO - HORA DO AÇAÍ* 🟣\n\n`;
+            // 2. Monta o texto para o WhatsApp com o número do pedido
+            let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
             textoMsg += `*Cliente:* ${nome}\n`;
             textoMsg += `*Contato:* ${whatsapp}\n`;
-            textoMsg += `*Endereço de Entrega:* ${endereco}\n\n`;
+            textoMsg += `*Endereço:* ${endereco}\n\n`;
             textoMsg += `*🛒 ITENS DO PEDIDO:*\n`;
 
-            // 2. Adiciona os itens do carrinho
-            let total = 0;
             carrinho.forEach((item, index) => {
-                total += item.precoTotal;
-                
                 let txtAdicionais = item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
                     : 'Sem complementos';
 
                 textoMsg += `\n${index + 1}. *${item.nome} (${item.tamanhoNome})*\n`;
                 textoMsg += `   ▫️ Adicionais: ${txtAdicionais}\n`;
-                textoMsg += `   ▫️ Valor: R$ ${item.precoTotal.toFixed(2).replace('.', ',')}\n`;
+                textoMsg += `   ▫️ R$ ${item.precoTotal.toFixed(2).replace('.', ',')}\n`;
             });
 
-            // 3. Adiciona o rodapé com total e pagamento
             textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
-            textoMsg += `*💳 Forma de Pagamento:* ${pagamento}\n`;
+            textoMsg += `*💳 Pagamento:* ${pagamento}\n`;
             textoMsg += `*💰 TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
 
-            // 4. Converte o texto para formato de URL (Link)
-            const textoCodificado = encodeURIComponent(textoMsg);
-            const linkWhatsApp = `https://wa.me/${numeroLoja}?text=${textoCodificado}`;
+            const linkWhatsApp = `https://wa.me/${numeroLoja}?text=${encodeURIComponent(textoMsg)}`;
 
-            // 5. Opcional: Limpa o carrinho após fechar o pedido
+            // 3. Limpa o carrinho e abre o WhatsApp
             localStorage.removeItem('carrinhoAcai');
-
-            // 6. Abre o WhatsApp em uma nova aba
             window.open(linkWhatsApp, '_blank');
             
-            // Recarrega a página para limpar a tela
+            // Volta para a página inicial
             window.location.href = 'index.html';
         }
+
+        // Roda a função assim que a tela carrega
+        document.addEventListener('DOMContentLoaded', carregarCarrinho);
     </script>
 </body>
 </html>

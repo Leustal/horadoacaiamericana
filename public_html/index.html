@@ -5,48 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hora do Açaí Americana</title>
     <style>
+        :root {
+            --primary: #5b0e8d;
+            --primary-light: #7b1fa2;
+            --accent: #ff4081;
+            --success: #2e8b57;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
 
         body {
-            background-color: #f4f4f5;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             max-width: 900px; 
             margin: 0 auto;
-            background: #fff;
             min-height: 100vh;
             position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 30px rgba(0,0,0,0.08);
         }
 
         header {
-            background-color: #4b0082;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
-            padding: 20px;
+            padding: 25px 20px;
             text-align: center;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 4px 12px rgba(91, 14, 141, 0.15);
         }
 
         header h1 {
             font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* Menu de Categorias Moderno */
         .categorias-menu {
             display: flex;
             overflow-x: auto;
-            background: #fff;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            gap: 15px;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-bottom: 1px solid #edf2f7;
+            gap: 12px;
             position: sticky;
-            top: 73px;
+            top: 86px;
             z-index: 99;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
         }
 
         .categorias-menu::-webkit-scrollbar {
@@ -54,66 +75,103 @@
         }
 
         .btn-categoria {
-            background: #f0f0f0;
+            background: #edf2f7;
             border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            color: #555;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-muted);
             cursor: pointer;
             white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .btn-categoria:hover {
+            background: #e2e8f0;
+            color: var(--primary);
         }
 
         .btn-categoria.ativo {
-            background: #4b0082;
+            background: var(--primary);
             color: white;
+            box-shadow: 0 4px 10px rgba(91, 14, 141, 0.3);
         }
 
         #cardapio-container {
-            padding: 20px;
-            padding-bottom: 100px;
+            padding: 25px 20px;
+            padding-bottom: 120px;
         }
 
+        .secao-categoria-titulo {
+            font-size: 1.4rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Cards Estilo Aplicativo de Delivery */
         .produto-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.02);
             cursor: pointer;
-            transition: background 0.2s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .produto-card:hover {
-            background-color: #fafafa;
-            padding-left: 10px;
-            padding-right: 10px;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border-color: rgba(91, 14, 141, 0.1);
+        }
+
+        .produto-info {
+            flex: 1;
+            padding-right: 15px;
         }
 
         .produto-info h3 {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-            color: #4b0082;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-main);
         }
 
         .produto-info p {
-            font-size: 0.9rem;
-            color: #777;
-            margin-bottom: 8px;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
         .produto-preco {
-            font-weight: bold;
-            color: #2e8b57;
-            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--success);
+            font-size: 1rem;
+            background: #e6f4ea;
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-block;
         }
 
-        /* MODAL */
+        /* MODAL MODERNO */
         #fundo-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
             z-index: 1000;
+            animation: fadeIn 0.2s ease;
         }
         
         #modal-produto {
@@ -122,12 +180,17 @@
             transform: translateX(-50%);
             width: 100%; max-width: 600px;
             background: #fff;
-            border-radius: 20px 20px 0 0;
-            padding: 25px;
+            border-radius: 28px 28px 0 0;
+            padding: 30px;
             z-index: 1001;
             max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translate(-50%, 100%); } to { transform: translate(-50%, 0); } }
 
         .escondido {
             display: none !important;
@@ -137,37 +200,65 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary);
+            font-size: 1.4rem;
         }
 
         .btn-fechar {
-            background: none; border: none;
-            font-size: 1.8rem; color: #777; cursor: pointer;
+            background: #edf2f7; 
+            border: none;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem; 
+            color: var(--text-muted); 
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .btn-fechar:hover { background: #e2e8f0; color: var(--text-main); }
+
+        .modal-subtitulo {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 20px 0 10px 0;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 6px;
         }
 
         .opcao-radio {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             margin-bottom: 10px;
+            transition: border-color 0.2s;
         }
 
-        /* Controle de Quantidade (+ e -) para Adicionais */
+        .opcao-radio:hover {
+            border-color: var(--primary-light);
+        }
+
+        /* Controle de Quantidade (+ e -) refinado */
         .controle-qtd {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .btn-qtd {
-            background: #4b0082;
+            background: var(--primary);
             color: white;
             border: none;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             font-weight: bold;
             font-size: 1.1rem;
@@ -175,14 +266,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: transform 0.1s;
         }
 
-        .btn-qtd:active {
-            transform: scale(0.95);
-        }
+        .btn-qtd:active { transform: scale(0.9); }
 
         .span-qtd {
-            font-weight: bold;
+            font-weight: 700;
             font-size: 1.1rem;
             min-width: 20px;
             text-align: center;
@@ -190,51 +280,82 @@
 
         .btn-adicionar-carrinho {
             width: 100%;
-            background: #4b0082; color: white;
-            padding: 15px; border: none; border-radius: 8px;
-            font-size: 1.1rem; font-weight: bold;
-            margin-top: 20px; cursor: pointer;
+            background: var(--success); 
+            color: white;
+            padding: 16px; 
+            border: none; 
+            border-radius: 14px;
+            font-size: 1.1rem; 
+            font-weight: 700;
+            margin-top: 25px; 
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(46, 139, 87, 0.3);
+            transition: background 0.2s, transform 0.1s;
         }
+        .btn-adicionar-carrinho:hover { background: #256f44; }
+        .btn-adicionar-carrinho:active { transform: scale(0.98); }
 
-        /* BARRA DO CARRINHO */
+        /* BARRA FLUTUANTE DO CARRINHO */
         #barra-carrinho {
             position: fixed;
-            bottom: 0; left: 50%;
+            bottom: 20px; left: 50%;
             transform: translateX(-50%);
-            width: 100%; max-width: 900px;
-            background: #2e8b57;
+            width: calc(100% - 40px); max-width: 860px;
+            background: var(--success);
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 25px;
+            padding: 16px 24px;
             z-index: 999;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(46, 139, 87, 0.4);
+            animation: bounceUp 0.3s ease;
+        }
+
+        @keyframes bounceUp {
+            0% { transform: translate(-50%, 20px); opacity: 0; }
+            100% { transform: translate(-50%, 0); opacity: 1; }
         }
 
         .carrinho-info {
             display: flex;
             flex-direction: column;
-            font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
+        }
+
+        .carrinho-info span:first-child {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .carrinho-info span:last-child {
+            font-weight: 800;
+            font-size: 1.2rem;
         }
 
         .btn-ver-carrinho {
             background: white;
-            color: #2e8b57;
+            color: var(--success);
             border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 800;
             cursor: pointer;
             font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: background 0.2s;
         }
+        .btn-ver-carrinho:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🟣 Hora do Açaí Americana</h1>
+        <h1>🟣 Hora do Açaí</h1>
+        <p>O melhor açaí da região, fresquinho e montado do seu jeito!</p>
     </header>
 
     <nav class="categorias-menu" id="categorias-menu">
@@ -242,7 +363,7 @@
     </nav>
 
     <main id="cardapio-container">
-        <p style="text-align: center; margin-top: 20px;">Buscando as delícias do cardápio...</p>
+        <p style="text-align: center; margin-top: 40px; color: var(--text-muted);">Buscando as delícias do cardápio...</p>
     </main>
 
     <!-- MODAL -->
@@ -250,17 +371,17 @@
     <div id="modal-produto" class="escondido">
         <div class="modal-header">
             <h2 id="modal-titulo">Nome do Produto</h2>
-            <button onclick="fecharModal()" class="btn-fechar">X</button>
+            <button onclick="fecharModal()" class="btn-fechar">&times;</button>
         </div>
-        <p id="modal-descricao" style="color: #777; margin-bottom: 15px;"></p>
+        <p id="modal-descricao" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;"></p>
         
-        <h3>1. Escolha o Tamanho</h3>
+        <div class="modal-subtitulo">1. Escolha o Tamanho</div>
         <div id="modal-tamanhos"></div>
 
         <div id="bloco-complementos">
-            <h3 style="margin-top: 20px;">2. Complementos (Adicione quantos quiser)</h3>
+            <div class="modal-subtitulo">2. Complementos & Adicionais</div>
             <div id="modal-complementos">
-                <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Carregando adicionais...</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Carregando adicionais...</p>
             </div>
         </div>
 
@@ -273,7 +394,7 @@
             <span id="qtd-itens-carrinho">0 itens</span>
             <span id="total-carrinho">R$ 0,00</span>
         </div>
-        <button class="btn-ver-carrinho" onclick="verCarrinho()">Ver Carrinho</button>
+        <button class="btn-ver-carrinho" onclick="verCarrinho()">Ver Carrinho 🛒</button>
     </div>
 
     <script>
@@ -307,10 +428,10 @@
 
                     const secao = document.createElement('div');
                     secao.id = `categoria-${categoria.id}`;
-                    secao.style.paddingTop = '80px'; 
-                    secao.style.marginTop = '-60px'; 
+                    secao.style.paddingTop = '90px'; 
+                    secao.style.marginTop = '-70px'; 
                     
-                    secao.innerHTML = `<h2 style="margin-bottom: 15px; color: #4b0082; font-size: 1.4rem; border-bottom: 2px solid #eee; padding-bottom: 5px;">${categoria.categoria}</h2>`;
+                    secao.innerHTML = `<div class="secao-categoria-titulo">${categoria.categoria}</div>`;
 
                     categoria.produtos.forEach(produto => {
                         const menorPreco = Math.min(...produto.tamanhos.map(t => t.preco));
@@ -350,11 +471,11 @@
                 const label = document.createElement('label');
                 label.className = 'opcao-radio';
                 label.innerHTML = `
-                    <span>
-                        <input type="radio" name="tamanho" value="${t.id}" ${index === 0 ? 'checked' : ''}>
+                    <span style="font-weight: 600;">
+                        <input type="radio" name="tamanho" value="${t.id}" ${index === 0 ? 'checked' : ''} style="margin-right: 8px;">
                         ${t.tamanho}
                     </span>
-                    <strong>+ R$ ${t.preco.toFixed(2).replace('.', ',')}</strong>
+                    <strong style="color: var(--success);">+ R$ ${t.preco.toFixed(2).replace('.', ',')}</strong>
                 `;
                 divTamanhos.appendChild(label);
             });
@@ -371,7 +492,7 @@
                 divComplementos.innerHTML = '';
             } else {
                 document.getElementById('bloco-complementos').style.display = 'block';
-                divComplementos.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Carregando adicionais...</p>';
+                divComplementos.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Carregando adicionais...</p>';
 
                 try {
                     const resposta = await fetch('/api/adicionais.php');
@@ -387,8 +508,8 @@
                         divAdicional.className = 'opcao-radio';
                         divAdicional.innerHTML = `
                             <div>
-                                <span style="font-weight: bold;">${add.nome}</span><br>
-                                <small style="color: #666;">${txtPreco}</small>
+                                <span style="font-weight: 600;">${add.nome}</span><br>
+                                <small style="color: var(--text-muted);">${txtPreco}</small>
                             </div>
                             <div class="controle-qtd">
                                 <button type="button" class="btn-qtd" onclick="mudarQtdAdicional('${add.id}', -1)">-</button>
@@ -439,7 +560,8 @@
                     tamanhoId: tamanhoId,
                     tamanhoNome: tamanhoNome,
                     adicionais: adicionais,
-                    precoTotal: tamanhoPreco + valorAdicionais
+                    precoTotal: tamanhoPreco + valorAdicionais,
+                    quantidade: 1
                 };
 
                 carrinho.push(itemCarrinho);
@@ -453,7 +575,6 @@
             document.getElementById('modal-produto').classList.remove('escondido');
         }
 
-        // Funções para controlar os botões de + e - dos adicionais
         function mudarQtdAdicional(id, delta) {
             const span = document.getElementById(`qtd-add-${id}`);
             let atual = parseInt(span.innerText);
@@ -475,10 +596,15 @@
             }
 
             let total = 0;
-            carrinho.forEach(item => total += item.precoTotal);
+            let qtdTotalItens = 0;
+            carrinho.forEach(item => {
+                let q = item.quantidade || 1;
+                total += item.precoTotal;
+                qtdTotalItens += q;
+            });
 
-            const textoItem = carrinho.length === 1 ? 'item' : 'itens';
-            document.getElementById('qtd-itens-carrinho').innerText = `${carrinho.length} ${textoItem}`;
+            const textoItem = qtdTotalItens === 1 ? 'item' : 'itens';
+            document.getElementById('qtd-itens-carrinho').innerText = `${qtdTotalItens} ${textoItem}`;
             document.getElementById('total-carrinho').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
             barra.classList.remove('escondido');

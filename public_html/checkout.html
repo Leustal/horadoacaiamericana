@@ -15,11 +15,17 @@
         
         .container { padding: 30px; background: #fff; min-height: calc(100vh - 75px); }
         
-        .item-carrinho { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .item-header { display: flex; justify-content: space-between; font-weight: bold; color: #4b0082; margin-bottom: 5px; font-size: 1.1rem; }
-        .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 10px; line-height: 1.4; }
-        .btn-remover { color: #d9534f; background: none; border: none; cursor: pointer; font-weight: bold; }
+        .item-carrinho { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .item-info { flex: 1; margin-right: 15px; }
+        .item-header { font-weight: bold; color: #4b0082; margin-bottom: 5px; font-size: 1.1rem; }
+        .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 8px; line-height: 1.4; }
+        .item-preco { font-weight: bold; color: #2e8b57; }
         
+        /* Controles de Quantidade do Item no Carrinho */
+        .acoes-item { display: flex; align-items: center; gap: 10px; }
+        .btn-qtd-carrinho { background: #4b0082; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-remover-item { color: #d9534f; background: none; border: none; cursor: pointer; font-size: 0.85rem; margin-top: 5px; text-decoration: underline; }
+
         .secao-form { margin-top: 25px; }
         .secao-form h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         input, select { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
@@ -30,7 +36,7 @@
         #resumo-total { font-size: 1.6rem; text-align: right; margin: 20px 0; color: #2e8b57; font-weight: bold; }
         .vazio { text-align: center; color: #777; margin-top: 50px; font-size: 1.1rem; }
 
-        /* Caixa de Pagamento PIX Dinâmica */
+        /* Caixa de Pagamento PIX com Mercado Pago */
         #box-pix {
             background: #f9f9fb;
             border: 2px dashed #4b0082;
@@ -40,27 +46,9 @@
             margin-bottom: 20px;
             display: none;
         }
-        #qrcode-container {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
-        }
-        .input-copia-cola {
-            background: #fff;
-            font-size: 0.85rem;
-            text-align: center;
-            cursor: pointer;
-        }
-        .btn-copiar {
-            background: #4b0082;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 5px;
-        }
+        #qrcode-container { display: flex; justify-content: center; margin: 15px 0; }
+        .input-copia-cola { background: #fff; font-size: 0.85rem; text-align: center; cursor: pointer; }
+        .btn-copiar { background: #4b0082; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -83,19 +71,19 @@
             
             <h3>💳 Forma de Pagamento</h3>
             <select id="cli-pagamento" onchange="verificarPagamento()">
-                <option value="pix">PIX (Com QR Code e Copia e Cola)</option>
+                <option value="pix">PIX</option>
                 <option value="cartao">Cartão de Crédito/Débito na Entrega</option>
                 <option value="dinheiro">Dinheiro na Entrega</option>
             </select>
 
-            <!-- BLOCO DINÂMICO DO PIX -->
+            <!-- BLOCO DO PIX DINÂMICO -->
             <div id="box-pix">
                 <h4 style="color: #4b0082; margin-bottom: 5px;">Pague com PIX Agora</h4>
                 <p style="font-size: 0.85rem; color: #555;">Escaneie o QR Code abaixo ou clique no botão para copiar o código.</p>
                 
                 <div id="qrcode-container"></div>
 
-                <input type="text" id="pix-copia-cola" class="input-copia-cola" readonly value="00020126580014br.gov.bcb.pix... (Gerando PIX)">
+                <input type="text" id="pix-copia-cola" class="input-copia-cola" readonly value="...">
                 <button type="button" class="btn-copiar" onclick="copiarPix()">Copiar Código PIX</button>
             </div>
 
@@ -125,7 +113,11 @@
             formEntrega.style.display = 'block';
 
             carrinho.forEach((item, index) => {
-                totalGlobal += item.precoTotal;
+                let qtdItem = item.quantidade || 1;
+                let precoUnitarioTotal = item.precoTotal / qtdItem;
+                let subtotalItem = item.precoTotal;
+
+                totalGlobal += subtotalItem;
 
                 let txtAdicionais = item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
@@ -134,70 +126,98 @@
                 const divItem = document.createElement('div');
                 divItem.className = 'item-carrinho';
                 divItem.innerHTML = `
-                    <div class="item-header">
-                        <span>${item.nome} (${item.tamanhoNome})</span>
-                        <span>R$ ${item.precoTotal.toFixed(2).replace('.', ',')}</span>
+                    <div class="item-info">
+                        <div class="item-header">${item.nome} (${item.tamanhoNome})</div>
+                        <div class="item-detalhes">Complementos: ${txtAdicionais}</div>
+                        <div class="item-preco">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</div>
+                        <button class="btn-remover-item" onclick="removerItemCompleto(${index})">Remover item</button>
                     </div>
-                    <div class="item-detalhes">
-                        Complementos: ${txtAdicionais}
+                    <div class="acoes-item">
+                        <button class="btn-qtd-carrinho" onclick="mudarQtdItem(${index}, -1)">-</button>
+                        <span style="font-weight: bold; min-width: 20px; text-align: center;">${qtdItem}</span>
+                        <button class="btn-qtd-carrinho" onclick="mudarQtdItem(${index}, 1)">+</button>
                     </div>
-                    <button class="btn-remover" onclick="removerItem(${index})">Remover item</button>
                 `;
                 container.appendChild(divItem);
             });
 
             resumoTotal.innerText = 'Total: ' + totalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            verificarPagamento(); // Atualiza o PIX caso esteja selecionado
+            verificarPagamento();
         }
 
-        function removerItem(index) {
+        function mudarQtdItem(index, delta) {
+            if (!carrinho[index].quantidade) carrinho[index].quantidade = 1;
+            
+            let precoUnitarioItem = carrinho[index].precoTotal / carrinho[index].quantidade;
+            carrinho[index].quantidade += delta;
+
+            if (carrinho[index].quantidade <= 0) {
+                carrinho.splice(index, 1);
+            } else {
+                carrinho[index].precoTotal = precoUnitarioItem * carrinho[index].quantidade;
+            }
+
+            localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
+            carregarCarrinho();
+        }
+
+        function removerItemCompleto(index) {
             carrinho.splice(index, 1);
             localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
             carregarCarrinho();
         }
 
-        // Função que controla a exibição do QR Code e Copia/Cola do PIX
-        function verificarPagamento() {
+        async function verificarPagamento() {
             const metodo = document.getElementById('cli-pagamento').value;
             const boxPix = document.getElementById('box-pix');
 
             if (metodo === 'pix') {
                 boxPix.style.display = 'block';
-                gerarDadosPix(totalGlobal);
+                await gerarPixMercadoPago();
             } else {
                 boxPix.style.display = 'none';
             }
         }
 
-        // Gera a string padrão do PIX (Payload simulado/exemplo com sua chave ou dados)
-        function gerarDadosPix(valor) {
-            // Substitua 'suachavepix@email.com' pela sua chave PIX real da loja
-            const chavePix = "6dc6a85f-ccda-45c9-8838-85e422073af9"; 
-            const nomeRecebedor = "Hora do Acai Americana";
-            const cidade = "Americana";
-            const valorFormatado = valor.toFixed(2);
-
-            // Payload padrão do Banco Central (BR Code Simplificado)
-            // Para testes, geramos um texto estruturado válido para cópia
-            const payloadPix = `00020126580014br.gov.bcb.pix0136${chavePix}5204000053039865802BR5925${nomeRecebedor}6009${cidade}62070503***6304`;
+        async function gerarPixMercadoPago() {
+            const containerQr = document.getElementById('qrcode-container');
+            const inputCopia = document.getElementById('pix-copia-cola');
             
-            document.getElementById('pix-copia-cola').value = payloadPix;
+            containerQr.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Gerando Pix no Mercado Pago...</p>';
+            inputCopia.value = "Aguarde gerando...";
 
-            // Limpa o QR Code anterior e gera um novo
-            document.getElementById('qrcode-container').innerHTML = "";
-            new QRCode(document.getElementById("qrcode-container"), {
-                text: payloadPix,
-                width: 180,
-                height: 180
-            });
+            const nomeCliente = document.getElementById('cli-nome').value || "Cliente Açaí";
+
+            try {
+                const resposta = await fetch('/api/gerar_pix.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        total: totalGlobal,
+                        cliente_nome: nomeCliente
+                    })
+                });
+
+                const dados = await resposta.json();
+
+                if (dados.sucesso) {
+                    containerQr.innerHTML = `<img src="data:image/png;base64,${dados.qr_code_base64}" alt="QR Code Pix" style="width: 180px; height: 180px;">`;
+                    inputCopia.value = dados.qr_code;
+                } else {
+                    containerQr.innerHTML = '<p style="color: red; font-size: 0.9rem;">Erro ao gerar Pix. Verifique o Token no PHP.</p>';
+                }
+            } catch (erro) {
+                console.error("Erro na requisição Pix:", erro);
+                containerQr.innerHTML = '<p style="color: red; font-size: 0.9rem;">Erro de conexão com a API.</p>';
+            }
         }
 
         function copiarPix() {
             const inputCopia = document.getElementById('pix-copia-cola');
             inputCopia.select();
-            inputCopia.setSelectionRange(0, 99999); // Para celulares
+            inputCopia.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(inputCopia.value);
-            alert("Código PIX Copia e Cola copiado com sucesso! Cole no aplicativo do seu banco.");
+            alert("Código Pix Copia e Cola copiado com sucesso!");
         }
 
         async function finalizarPedido() {
@@ -240,7 +260,6 @@
                 console.warn("Aviso ao salvar no banco:", erro);
             }
 
-            // ⚠️ COLOQUE AQUI O NÚMERO DA SUA LOJA NO WHATSAPP ⚠️
             const numeroLoja = "5519993857689"; 
 
             let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
@@ -250,11 +269,12 @@
             textoMsg += `*🛒 ITENS DO PEDIDO:*\n`;
 
             carrinho.forEach((item, index) => {
+                let qtd = item.quantidade || 1;
                 let txtAdicionais = item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
                     : 'Sem complementos';
 
-                textoMsg += `\n${index + 1}. *${item.nome} (${item.tamanhoNome})*\n`;
+                textoMsg += `\n${index + 1}. *${qtd}x ${item.nome} (${item.tamanhoNome})*\n`;
                 textoMsg += `   ▫️ Adicionais: ${txtAdicionais}\n`;
                 textoMsg += `   ▫️ R$ ${item.precoTotal.toFixed(2).replace('.', ',')}\n`;
             });

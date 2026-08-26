@@ -108,7 +108,7 @@
             font-size: 1.1rem;
         }
 
-        /* ----- ESTILOS DO MODAL ----- */
+        /* MODAL */
         #fundo-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -148,11 +148,44 @@
         .opcao-radio {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 8px;
             margin-bottom: 10px;
+        }
+
+        /* Controle de Quantidade (+ e -) para Adicionais */
+        .controle-qtd {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-qtd {
+            background: #4b0082;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.1rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-qtd:active {
+            transform: scale(0.95);
+        }
+
+        .span-qtd {
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 20px;
+            text-align: center;
         }
 
         .btn-adicionar-carrinho {
@@ -163,7 +196,7 @@
             margin-top: 20px; cursor: pointer;
         }
 
-        /* ----- BARRA DO CARRINHO ----- */
+        /* BARRA DO CARRINHO */
         #barra-carrinho {
             position: fixed;
             bottom: 0; left: 50%;
@@ -225,7 +258,7 @@
         <div id="modal-tamanhos"></div>
 
         <div id="bloco-complementos">
-            <h3 style="margin-top: 20px;">2. Complementos</h3>
+            <h3 style="margin-top: 20px;">2. Complementos (Adicione quantos quiser)</h3>
             <div id="modal-complementos">
                 <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Carregando adicionais...</p>
             </div>
@@ -350,16 +383,20 @@
                         const precoAdd = parseFloat(add.preco);
                         const txtPreco = precoAdd > 0 ? `+ R$ ${precoAdd.toFixed(2).replace('.', ',')}` : 'Grátis';
 
-                        const label = document.createElement('label');
-                        label.className = 'opcao-radio';
-                        label.innerHTML = `
-                            <span>
-                                <input type="checkbox" name="adicional" value="${add.id}">
-                                ${add.nome}
-                            </span>
-                            <strong>${txtPreco}</strong>
+                        const divAdicional = document.createElement('div');
+                        divAdicional.className = 'opcao-radio';
+                        divAdicional.innerHTML = `
+                            <div>
+                                <span style="font-weight: bold;">${add.nome}</span><br>
+                                <small style="color: #666;">${txtPreco}</small>
+                            </div>
+                            <div class="controle-qtd">
+                                <button type="button" class="btn-qtd" onclick="mudarQtdAdicional('${add.id}', -1)">-</button>
+                                <span class="span-qtd" id="qtd-add-${add.id}" data-preco="${precoAdd}">0</span>
+                                <button type="button" class="btn-qtd" onclick="mudarQtdAdicional('${add.id}', 1)">+</button>
+                            </div>
                         `;
-                        divComplementos.appendChild(label);
+                        divComplementos.appendChild(divAdicional);
                     });
 
                 } catch (erro) {
@@ -371,25 +408,28 @@
             btnAdicionar.onclick = () => {
                 const tamanhoSelecionado = document.querySelector('input[name="tamanho"]:checked');
                 const tamanhoId = tamanhoSelecionado.value;
-                const tamanhoNome = tamanhoSelecionado.closest('span').innerText.trim();
+                const tamanhoNome = tamanhoSelecionado.closest('label').querySelector('span').innerText.trim();
                 const tamanhoPreco = produto.tamanhos.find(t => t.id == tamanhoId).preco;
 
                 let adicionais = [];
                 let valorAdicionais = 0;
 
                 if (aceitaComplementos) {
-                    const adicionaisMarcados = document.querySelectorAll('input[name="adicional"]:checked');
-                    adicionaisMarcados.forEach(chk => {
-                        const addNome = chk.closest('span').innerText.trim();
-                        const addPrecoTexto = chk.closest('label').querySelector('strong').innerText;
-                        let addPreco = 0;
-                        
-                        if (addPrecoTexto !== 'Grátis') {
-                            addPreco = parseFloat(addPrecoTexto.replace('+ R$ ', '').replace(',', '.'));
+                    const spansQtd = document.querySelectorAll('.span-qtd');
+                    spansQtd.forEach(span => {
+                        const qtd = parseInt(span.innerText);
+                        if (qtd > 0) {
+                            const addId = span.id.replace('qtd-add-', '');
+                            const addNome = span.closest('.opcao-radio').querySelector('span').innerText;
+                            const precoUnitario = parseFloat(span.getAttribute('data-preco'));
+                            
+                            adicionais.push({
+                                id: addId,
+                                nome: `${qtd}x ${addNome}`,
+                                preco: precoUnitario * qtd
+                            });
+                            valorAdicionais += precoUnitario * qtd;
                         }
-
-                        adicionais.push({ id: chk.value, nome: addNome, preco: addPreco });
-                        valorAdicionais += addPreco;
                     });
                 }
 
@@ -411,6 +451,15 @@
 
             document.getElementById('fundo-modal').classList.remove('escondido');
             document.getElementById('modal-produto').classList.remove('escondido');
+        }
+
+        // Funções para controlar os botões de + e - dos adicionais
+        function mudarQtdAdicional(id, delta) {
+            const span = document.getElementById(`qtd-add-${id}`);
+            let atual = parseInt(span.innerText);
+            atual += delta;
+            if (atual < 0) atual = 0;
+            span.innerText = atual;
         }
 
         function fecharModal() {

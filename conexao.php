@@ -29,10 +29,6 @@ $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 
-// 👇 LINHA DE TESTE ADICIONADA AQUI 👇
-$ip_lido = $_ENV['DB_HOST'] ?? 'NENHUM (Caiu no fallback)';
-die("TESTE DE DIAGNÓSTICO: O PHP está tentando conectar no host: " . $host . " | O que ele leu do .env foi: " . $ip_lido);
-
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hora do Açaí Americana</title>
     <style>
-        /* CSS Básico - Estilo Mobile First */
         * {
             margin: 0;
             padding: 0;
@@ -72,7 +71,7 @@
 
         #cardapio-container {
             padding: 15px;
-            padding-bottom: 100px; /* Espaço para o carrinho no final */
+            padding-bottom: 100px;
         }
 
         .produto-card {
@@ -213,7 +212,7 @@
         </div>
         <p id="modal-descricao" style="color: #777; margin-bottom: 15px;"></p>
         
-       <h3>1. Escolha o Tamanho</h3>
+        <h3>1. Escolha o Tamanho</h3>
         <div id="modal-tamanhos"></div>
 
         <div id="bloco-complementos">
@@ -235,7 +234,7 @@
         <button class="btn-ver-carrinho" onclick="verCarrinho()">Ver Carrinho</button>
     </div>
 
-    <!-- Script para buscar na API, modal e carrinho -->
+    <!-- Script Principal -->
     <script>
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
 
@@ -286,6 +285,7 @@
                             </div>
                         `;
                         
+                        // Passa o nome da categoria junto para o modal saber se exibe complementos ou não
                         cardProduto.onclick = () => abrirModal(produto, categoria.categoria);
                         secao.appendChild(cardProduto);
                     });
@@ -319,11 +319,9 @@
                 divTamanhos.appendChild(label);
             });
 
-            // SEÇÃO DE COMPLEMENTOS CONDICIONAL
-            const secaoComplementosTitulo = document.getElementById('titulo-complementos'); // vamos adicionar um id nele
             const divComplementos = document.getElementById('modal-complementos');
             
-            // Verifica se a categoria é Açaí ou Milkshake (você pode ajustar o nome exato conforme está no seu banco)
+            // Verifica se a categoria aceita complementos (Açaí ou Milkshake)
             const aceitaComplementos = nomeCategoria && (
                 nomeCategoria.toLowerCase().includes('açaí') || 
                 nomeCategoria.toLowerCase().includes('acai') || 
@@ -331,12 +329,9 @@
             );
 
             if (!aceitaComplementos) {
-                // Se não aceita, esconde a seção de complementos
                 document.getElementById('bloco-complementos').style.display = 'none';
                 divComplementos.innerHTML = '';
             } else {
-                
-                // Se aceita, mostra a seção e busca os adicionais da API
                 document.getElementById('bloco-complementos').style.display = 'block';
                 divComplementos.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Carregando adicionais...</p>';
 
@@ -367,7 +362,6 @@
                 }
             }
 
-            // Restante do botão adicionar...
             const btnAdicionar = document.querySelector('.btn-adicionar-carrinho');
             btnAdicionar.onclick = () => {
                 const tamanhoSelecionado = document.querySelector('input[name="tamanho"]:checked');
@@ -378,7 +372,6 @@
                 let adicionais = [];
                 let valorAdicionais = 0;
 
-                // Só pega complementos se o bloco estiver visível
                 if (aceitaComplementos) {
                     const adicionaisMarcados = document.querySelectorAll('input[name="adicional"]:checked');
                     adicionaisMarcados.forEach(chk => {
@@ -414,79 +407,6 @@
             document.getElementById('fundo-modal').classList.remove('escondido');
             document.getElementById('modal-produto').classList.remove('escondido');
         }
-
-            const divComplementos = document.getElementById('modal-complementos');
-            divComplementos.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Carregando adicionais...</p>';
-
-            try {
-                const resposta = await fetch('/api/adicionais.php');
-                const adicionais = await resposta.json();
-                
-                divComplementos.innerHTML = ''; 
-                
-                adicionais.forEach(add => {
-                    const precoAdd = parseFloat(add.preco);
-                    const txtPreco = precoAdd > 0 ? `+ R$ ${precoAdd.toFixed(2).replace('.', ',')}` : 'Grátis';
-
-                    const label = document.createElement('label');
-                    label.className = 'opcao-radio';
-                    label.innerHTML = `
-                        <span>
-                            <input type="checkbox" name="adicional" value="${add.id}">
-                            ${add.nome}
-                        </span>
-                        <strong>${txtPreco}</strong>
-                    `;
-                    divComplementos.appendChild(label);
-                });
-
-            } catch (erro) {
-                divComplementos.innerHTML = '<p style="color: red;">Erro ao carregar os complementos.</p>';
-            }
-
-            const btnAdicionar = document.querySelector('.btn-adicionar-carrinho');
-            btnAdicionar.onclick = () => {
-                const tamanhoSelecionado = document.querySelector('input[name="tamanho"]:checked');
-                const tamanhoId = tamanhoSelecionado.value;
-                const tamanhoNome = tamanhoSelecionado.closest('span').innerText.trim();
-                const tamanhoPreco = produto.tamanhos.find(t => t.id == tamanhoId).preco;
-
-                const adicionaisMarcados = document.querySelectorAll('input[name="adicional"]:checked');
-                let adicionais = [];
-                let valorAdicionais = 0;
-
-                adicionaisMarcados.forEach(chk => {
-                    const addNome = chk.closest('span').innerText.trim();
-                    const addPrecoTexto = chk.closest('label').querySelector('strong').innerText;
-                    let addPreco = 0;
-                    
-                    if (addPrecoTexto !== 'Grátis') {
-                        addPreco = parseFloat(addPrecoTexto.replace('+ R$ ', '').replace(',', '.'));
-                    }
-
-                    adicionais.push({ id: chk.value, nome: addNome, preco: addPreco });
-                    valorAdicionais += addPreco;
-                });
-
-                const itemCarrinho = {
-                    produtoId: produto.id,
-                    nome: produto.nome,
-                    tamanhoId: tamanhoId,
-                    tamanhoNome: tamanhoNome,
-                    adicionais: adicionais,
-                    precoTotal: tamanhoPreco + valorAdicionais
-                };
-
-                carrinho.push(itemCarrinho);
-                localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
-                
-                atualizarBarraCarrinho();
-                fecharModal();
-            };
-
-            document.getElementById('fundo-modal').classList.remove('escondido');
-            document.getElementById('modal-produto').classList.remove('escondido');
-        
 
         function fecharModal() {
             document.getElementById('fundo-modal').classList.add('escondido');

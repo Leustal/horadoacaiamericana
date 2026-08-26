@@ -4,44 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrinho - Hora do Açaí</title>
+    <!-- Biblioteca para gerar QR Code do PIX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* Reutilizando a base do nosso app */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { max-width: 500px; margin: 0 auto; background: #f4f4f5; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        body { max-width: 900px; margin: 0 auto; background: #f4f4f5; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
         
-        header { background-color: #4b0082; color: white; padding: 20px; display: flex; align-items: center; position: sticky; top: 0; }
+        header { background-color: #4b0082; color: white; padding: 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
         .btn-voltar { color: white; text-decoration: none; font-weight: bold; margin-right: 15px; font-size: 1.5rem; }
         
-        .container { padding: 20px; background: #fff; min-height: calc(100vh - 70px); }
+        .container { padding: 30px; background: #fff; min-height: calc(100vh - 75px); }
         
-        /* Lista de Itens */
         .item-carrinho { border-bottom: 1px solid #eee; padding: 15px 0; }
         .item-header { display: flex; justify-content: space-between; font-weight: bold; color: #4b0082; margin-bottom: 5px; font-size: 1.1rem; }
         .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 10px; line-height: 1.4; }
         .btn-remover { color: #d9534f; background: none; border: none; cursor: pointer; font-weight: bold; }
         
-        /* Formulário */
         .secao-form { margin-top: 25px; }
         .secao-form h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         input, select { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
         
         .btn-finalizar { width: 100%; background: #2e8b57; color: white; padding: 18px; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #resumo-total { font-size: 1.5rem; text-align: right; margin: 20px 0; color: #2e8b57; font-weight: bold; }
+        .btn-finalizar:hover { background: #256f44; }
         
-        .vazio { text-align: center; color: #777; margin-top: 50px; }
+        #resumo-total { font-size: 1.6rem; text-align: right; margin: 20px 0; color: #2e8b57; font-weight: bold; }
+        .vazio { text-align: center; color: #777; margin-top: 50px; font-size: 1.1rem; }
+
+        /* Caixa de Pagamento PIX Dinâmica */
+        #box-pix {
+            background: #f9f9fb;
+            border: 2px dashed #4b0082;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+        #qrcode-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .input-copia-cola {
+            background: #fff;
+            font-size: 0.85rem;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn-copiar {
+            background: #4b0082;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <a href="index.html" class="btn-voltar">←</a>
-        <h2>Seu Pedido</h2>
+        <h2>Finalizar Pedido</h2>
     </header>
 
     <div class="container">
-        <div id="lista-itens">
-            <!-- Os itens do carrinho vão aparecer aqui -->
-        </div>
+        <div id="lista-itens"></div>
 
         <div id="resumo-total">Total: R$ 0,00</div>
 
@@ -51,19 +81,31 @@
             <input type="tel" id="cli-whatsapp" placeholder="WhatsApp (DDD + Número)" required>
             <input type="text" id="cli-endereco" placeholder="Rua, Número, Bairro e Ponto de Referência" required>
             
-            <h3>💳 Pagamento</h3>
-            <select id="cli-pagamento">
-                <option value="pix">PIX (Mais rápido)</option>
+            <h3>💳 Forma de Pagamento</h3>
+            <select id="cli-pagamento" onchange="verificarPagamento()">
+                <option value="pix">PIX (Com QR Code e Copia e Cola)</option>
                 <option value="cartao">Cartão de Crédito/Débito na Entrega</option>
                 <option value="dinheiro">Dinheiro na Entrega</option>
             </select>
 
-            <button class="btn-finalizar" onclick="finalizarPedido()">Concluir Pedido</button>
+            <!-- BLOCO DINÂMICO DO PIX -->
+            <div id="box-pix">
+                <h4 style="color: #4b0082; margin-bottom: 5px;">Pague com PIX Agora</h4>
+                <p style="font-size: 0.85rem; color: #555;">Escaneie o QR Code abaixo ou clique no botão para copiar o código.</p>
+                
+                <div id="qrcode-container"></div>
+
+                <input type="text" id="pix-copia-cola" class="input-copia-cola" readonly value="00020126580014br.gov.bcb.pix... (Gerando PIX)">
+                <button type="button" class="btn-copiar" onclick="copiarPix()">Copiar Código PIX</button>
+            </div>
+
+            <button class="btn-finalizar" onclick="finalizarPedido()">Concluir Pedido no WhatsApp</button>
         </div>
     </div>
 
     <script>
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
+        let totalGlobal = 0;
 
         function carregarCarrinho() {
             const container = document.getElementById('lista-itens');
@@ -71,7 +113,7 @@
             const formEntrega = document.getElementById('formulario-entrega');
             
             container.innerHTML = ''; 
-            let total = 0;
+            totalGlobal = 0;
 
             if (carrinho.length === 0) {
                 container.innerHTML = '<p class="vazio">Seu carrinho está vazio. 😕<br><br><a href="index.html" style="color: #4b0082; font-weight: bold;">Voltar ao Cardápio</a></p>';
@@ -83,7 +125,7 @@
             formEntrega.style.display = 'block';
 
             carrinho.forEach((item, index) => {
-                total += item.precoTotal;
+                totalGlobal += item.precoTotal;
 
                 let txtAdicionais = item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
@@ -101,17 +143,61 @@
                     </div>
                     <button class="btn-remover" onclick="removerItem(${index})">Remover item</button>
                 `;
-                
                 container.appendChild(divItem);
             });
 
-            resumoTotal.innerText = 'Total: ' + total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            resumoTotal.innerText = 'Total: ' + totalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            verificarPagamento(); // Atualiza o PIX caso esteja selecionado
         }
 
         function removerItem(index) {
             carrinho.splice(index, 1);
             localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
             carregarCarrinho();
+        }
+
+        // Função que controla a exibição do QR Code e Copia/Cola do PIX
+        function verificarPagamento() {
+            const metodo = document.getElementById('cli-pagamento').value;
+            const boxPix = document.getElementById('box-pix');
+
+            if (metodo === 'pix') {
+                boxPix.style.display = 'block';
+                gerarDadosPix(totalGlobal);
+            } else {
+                boxPix.style.display = 'none';
+            }
+        }
+
+        // Gera a string padrão do PIX (Payload simulado/exemplo com sua chave ou dados)
+        function gerarDadosPix(valor) {
+            // Substitua 'suachavepix@email.com' pela sua chave PIX real da loja
+            const chavePix = "6dc6a85f-ccda-45c9-8838-85e422073af9"; 
+            const nomeRecebedor = "Hora do Acai Americana";
+            const cidade = "Americana";
+            const valorFormatado = valor.toFixed(2);
+
+            // Payload padrão do Banco Central (BR Code Simplificado)
+            // Para testes, geramos um texto estruturado válido para cópia
+            const payloadPix = `00020126580014br.gov.bcb.pix0136${chavePix}5204000053039865802BR5925${nomeRecebedor}6009${cidade}62070503***6304`;
+            
+            document.getElementById('pix-copia-cola').value = payloadPix;
+
+            // Limpa o QR Code anterior e gera um novo
+            document.getElementById('qrcode-container').innerHTML = "";
+            new QRCode(document.getElementById("qrcode-container"), {
+                text: payloadPix,
+                width: 180,
+                height: 180
+            });
+        }
+
+        function copiarPix() {
+            const inputCopia = document.getElementById('pix-copia-cola');
+            inputCopia.select();
+            inputCopia.setSelectionRange(0, 99999); // Para celulares
+            navigator.clipboard.writeText(inputCopia.value);
+            alert("Código PIX Copia e Cola copiado com sucesso! Cole no aplicativo do seu banco.");
         }
 
         async function finalizarPedido() {
@@ -127,15 +213,10 @@
                 return;
             }
 
-            // Desativa o botão para evitar envios duplos
             const btn = document.querySelector('.btn-finalizar');
             btn.innerText = "Processando...";
             btn.disabled = true;
 
-            let total = 0;
-            carrinho.forEach(item => total += item.precoTotal);
-
-            // 1. Salva o pedido no banco via API
             let pedidoId = 'N/A';
             try {
                 const resposta = await fetch('/api/pedidos.php', {
@@ -146,7 +227,7 @@
                         cliente_telefone: whatsapp,
                         endereco: endereco,
                         forma_pagamento: pagamento,
-                        total: total,
+                        total: totalGlobal,
                         itens: carrinho
                     })
                 });
@@ -156,13 +237,12 @@
                     pedidoId = resultado.pedido_id;
                 }
             } catch (erro) {
-                console.warn("Não foi possível salvar no banco, prosseguindo com o WhatsApp:", erro);
+                console.warn("Aviso ao salvar no banco:", erro);
             }
 
-            // ⚠️ COLOQUE AQUI O NÚMERO DA SUA LOJA ⚠️
+            // ⚠️ COLOQUE AQUI O NÚMERO DA SUA LOJA NO WHATSAPP ⚠️
             const numeroLoja = "5519993857689"; 
 
-            // 2. Monta o texto para o WhatsApp com o número do pedido
             let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
             textoMsg += `*Cliente:* ${nome}\n`;
             textoMsg += `*Contato:* ${whatsapp}\n`;
@@ -181,19 +261,15 @@
 
             textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
             textoMsg += `*💳 Pagamento:* ${pagamento}\n`;
-            textoMsg += `*💰 TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
+            textoMsg += `*💰 TOTAL: R$ ${totalGlobal.toFixed(2).replace('.', ',')}*\n`;
 
             const linkWhatsApp = `https://wa.me/${numeroLoja}?text=${encodeURIComponent(textoMsg)}`;
 
-            // 3. Limpa o carrinho e abre o WhatsApp
             localStorage.removeItem('carrinhoAcai');
             window.open(linkWhatsApp, '_blank');
-            
-            // Volta para a página inicial
             window.location.href = 'index.html';
         }
 
-        // Roda a função assim que a tela carrega
         document.addEventListener('DOMContentLoaded', carregarCarrinho);
     </script>
 </body>

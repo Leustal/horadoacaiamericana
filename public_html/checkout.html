@@ -91,7 +91,6 @@
             
             <button type="button" class="btn-gps" onclick="usarMinhaLocalizacao()">📍 Preencher automaticamente via GPS</button>
 
-            <!-- CAMPOS INDIVIDUAIS E SEPARADOS -->
             <label for="cli-rua">Rua / Avenida</label>
             <input type="text" id="cli-rua" placeholder="Ex: Rua das Flores" required>
 
@@ -102,7 +101,7 @@
                 </div>
                 <div>
                     <label for="cli-bairro">Bairro</label>
-                    <input type="text" id="cli-bairro" placeholder="Ex: São Manuel" required onblur="analisarTaxaEntrega()">
+                    <input type="text" id="cli-bairro" placeholder="Ex: São Vito" required oninput="analisarTaxaEntrega()" onblur="analisarTaxaEntrega()">
                 </div>
             </div>
 
@@ -197,14 +196,19 @@
             }
         }
 
-        // Verifica o campo "Bairro" para calcular a taxa automaticamente
+        // Remove acentos e padroniza o texto para comparar perfeitamente
+        function normalizarTexto(texto) {
+            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
         function analisarTaxaEntrega() {
-            const bairroDigitado = document.getElementById('cli-bairro').value.toLowerCase().trim();
-            let taxaEncontrada = 2.00; // Padrão se não achar na lista do banco
+            const bairroDigitado = normalizarTexto(document.getElementById('cli-bairro').value);
+            let taxaEncontrada = 2.00; // Padrão caso não ache na lista do banco
 
             if (bairroDigitado && listaBairros && listaBairros.length > 0) {
                 for (let b of listaBairros) {
-                    if (b.nome.toLowerCase().includes(bairroDigitado) || bairroDigitado.includes(b.nome.toLowerCase())) {
+                    const nomeBancoNorm = normalizarTexto(b.nome);
+                    if (nomeBancoNorm.includes(bairroDigitado) || bairroDigitado.includes(nomeBancoNorm)) {
                         taxaEncontrada = parseFloat(b.taxa);
                         break;
                     }
@@ -215,7 +219,6 @@
             atualizarTotalGeral();
         }
 
-        // Preenchimento automático via GPS separando cada dado em seu respectivo campo
         function usarMinhaLocalizacao() {
             if (!navigator.geolocation) {
                 alert("Seu navegador não suporta geolocalização.");
@@ -354,7 +357,6 @@
                 return;
             }
 
-            // Monta o endereço formatado para salvar no banco ou enviar na mensagem
             const enderecoFormatado = `${rua}, nº ${numero} - Bairro: ${bairro}${complemento ? ' (' + complemento + ')' : ''}`;
 
             const btn = document.querySelector('.btn-finalizar');

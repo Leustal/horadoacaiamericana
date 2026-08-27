@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrinho - Hora do Açaí</title>
-    <!-- Biblioteca para gerar QR Code do PIX -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -18,10 +17,10 @@
         .item-carrinho { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .item-info { flex: 1; margin-right: 15px; }
         .item-header { font-weight: bold; color: #4b0082; margin-bottom: 5px; font-size: 1.1rem; }
-        .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 8px; line-height: 1.4; }
+        .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 4px; line-height: 1.4; }
+        .item-obs { font-size: 0.85rem; color: #d97706; font-style: italic; margin-bottom: 8px; }
         .item-preco { font-weight: bold; color: #2e8b57; }
         
-        /* Controles de Quantidade do Item no Carrinho */
         .acoes-item { display: flex; align-items: center; gap: 10px; }
         .btn-qtd-carrinho { background: #4b0082; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-remover-item { color: #d9534f; background: none; border: none; cursor: pointer; font-size: 0.85rem; margin-top: 5px; text-decoration: underline; }
@@ -36,7 +35,6 @@
         #resumo-total { font-size: 1.6rem; text-align: right; margin: 20px 0; color: #2e8b57; font-weight: bold; }
         .vazio { text-align: center; color: #777; margin-top: 50px; font-size: 1.1rem; }
 
-        /* Caixa de Pagamento PIX com Mercado Pago */
         #box-pix {
             background: #f9f9fb;
             border: 2px dashed #4b0082;
@@ -76,13 +74,10 @@
                 <option value="dinheiro">Dinheiro na Entrega</option>
             </select>
 
-            <!-- BLOCO DO PIX DINÂMICO -->
             <div id="box-pix">
                 <h4 style="color: #4b0082; margin-bottom: 5px;">Pague com PIX Agora</h4>
                 <p style="font-size: 0.85rem; color: #555;">Escaneie o QR Code abaixo ou clique no botão para copiar o código.</p>
-                
                 <div id="qrcode-container"></div>
-
                 <input type="text" id="pix-copia-cola" class="input-copia-cola" readonly value="...">
                 <button type="button" class="btn-copiar" onclick="copiarPix()">Copiar Código PIX</button>
             </div>
@@ -119,9 +114,11 @@
 
                 totalGlobal += subtotalItem;
 
-                let txtAdicionais = item.adicionais.length > 0 
+                let txtAdicionais = item.adicionais && item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
                     : 'Sem complementos';
+
+                let txtObs = item.observacao ? `Obs: "${item.observacao}"` : '';
 
                 const divItem = document.createElement('div');
                 divItem.className = 'item-carrinho';
@@ -129,6 +126,7 @@
                     <div class="item-info">
                         <div class="item-header">${item.nome} (${item.tamanhoNome})</div>
                         <div class="item-detalhes">Complementos: ${txtAdicionais}</div>
+                        ${txtObs ? `<div class="item-obs">${txtObs}</div>` : ''}
                         <div class="item-preco">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</div>
                         <button class="btn-remover-item" onclick="removerItemCompleto(${index})">Remover item</button>
                     </div>
@@ -260,7 +258,7 @@
                 console.warn("Aviso ao salvar no banco:", erro);
             }
 
-            const numeroLoja = "5519993857689"; 
+            const numeroLoja = "5519999999999"; 
 
             let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
             textoMsg += `*Cliente:* ${nome}\n`;
@@ -270,12 +268,15 @@
 
             carrinho.forEach((item, index) => {
                 let qtd = item.quantidade || 1;
-                let txtAdicionais = item.adicionais.length > 0 
+                let txtAdicionais = item.adicionais && item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
                     : 'Sem complementos';
 
                 textoMsg += `\n${index + 1}. *${qtd}x ${item.nome} (${item.tamanhoNome})*\n`;
                 textoMsg += `   ▫️ Adicionais: ${txtAdicionais}\n`;
+                if (item.observacao) {
+                    textoMsg += `   ▫️ ⚠️ *Obs:* ${item.observacao}\n`;
+                }
                 textoMsg += `   ▫️ R$ ${item.precoTotal.toFixed(2).replace('.', ',')}\n`;
             });
 

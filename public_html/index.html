@@ -8,7 +8,7 @@
         :root {
             --primary: #5b0e8d;
             --primary-light: #7b1fa2;
-            --primary-soft: #f3e8ff; /* Roxo claro para detalhes e botões */
+            --primary-soft: #f3e8ff; 
             --primary-soft-hover: #e9d5ff;
             --success: #2e8b57;
             --bg-color: #f8f9fa;
@@ -57,7 +57,6 @@
             margin-top: 4px;
         }
 
-        /* Menu de Categorias */
         .categorias-menu {
             display: flex;
             overflow-x: auto;
@@ -112,7 +111,6 @@
             margin-top: 10px;
         }
 
-        /* Cards com espaço para Imagem e botão Roxo Claro */
         .produto-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -134,7 +132,6 @@
             border-color: rgba(91, 14, 141, 0.1);
         }
 
-        /* Espaço da Imagem do Produto */
         .produto-imagem-container {
             width: 85px;
             height: 85px;
@@ -172,7 +169,6 @@
             line-height: 1.3;
         }
 
-        /* Botão / Preço em Roxo Claro */
         .produto-acao-preco {
             display: flex;
             flex-direction: column;
@@ -262,6 +258,24 @@
         }
         .span-qtd { font-weight: 700; font-size: 1.1rem; min-width: 20px; text-align: center; }
 
+        /* Campo de Observações */
+        .input-observacao {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            resize: none;
+            margin-top: 5px;
+        }
+        .input-observacao:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
         .btn-adicionar-carrinho {
             width: 100%; background: var(--primary); color: white;
             padding: 16px; border: none; border-radius: 14px;
@@ -321,6 +335,9 @@
             </div>
         </div>
 
+        <div class="modal-subtitulo">3. Observações do Item</div>
+        <textarea id="modal-obs" class="input-observacao" rows="2" placeholder="Ex: Caprichar no xarope, sem leite condensado..."></textarea>
+
         <button class="btn-adicionar-carrinho">Adicionar ao Carrinho</button>
     </div>
 
@@ -372,9 +389,6 @@
                     categoria.produtos.forEach(produto => {
                         const menorPreco = Math.min(...produto.tamanhos.map(t => t.preco));
                         const precoFormatado = menorPreco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-                        // Se você cadastrar uma imagem no banco ou quiser usar uma padrão, pode ajustar aqui:
-                        // Exemplo: produto.imagem (caso adicione no backend futuramente)
                         const imagemUrl = produto.imagem || 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=150&q=80';
 
                         const cardProduto = document.createElement('div');
@@ -409,6 +423,7 @@
         async function abrirModal(produto, nomeCategoria) {
             document.getElementById('modal-titulo').innerText = produto.nome;
             document.getElementById('modal-descricao').innerText = produto.descricao;
+            document.getElementById('modal-obs').value = ''; // Limpa a observação anterior
             
             const divTamanhos = document.getElementById('modal-tamanhos');
             divTamanhos.innerHTML = ''; 
@@ -448,7 +463,7 @@
                     
                     adicionais.forEach(add => {
                         const precoAdd = parseFloat(add.preco);
-                        const txtPreco = precoAdd > 0 ? `+ R$ ${precoAdd.toFixed(2).replace('.', ', ')}` : 'Grátis';
+                        const txtPreco = precoAdd > 0 ? `+ R$ ${precoAdd.toFixed(2).replace('.', ',')}` : 'Grátis';
 
                         const divAdicional = document.createElement('div');
                         divAdicional.className = 'opcao-radio';
@@ -477,6 +492,7 @@
                 const tamanhoId = tamanhoSelecionado.value;
                 const tamanhoNome = tamanhoSelecionado.closest('label').querySelector('span').innerText.trim();
                 const tamanhoPreco = produto.tamanhos.find(t => t.id == tamanhoId).preco;
+                const observacao = document.getElementById('modal-obs').value.trim();
 
                 let adicionais = [];
                 let valorAdicionais = 0;
@@ -506,6 +522,7 @@
                     tamanhoId: tamanhoId,
                     tamanhoNome: tamanhoNome,
                     adicionais: adicionais,
+                    observacao: observacao,
                     precoTotal: tamanhoPreco + valorAdicionais,
                     quantidade: 1
                 };

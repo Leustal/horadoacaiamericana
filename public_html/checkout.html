@@ -29,6 +29,9 @@
         .secao-form h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         input, select { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
         
+        .btn-gps { background: #edf2f7; color: #5b0e8d; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 15px; width: 100%; transition: background 0.2s; }
+        .btn-gps:hover { background: #e2e8f0; }
+
         .resumo-valores { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
         .linha-resumo { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 1rem; color: #4a5568; }
         .linha-resumo.total { font-size: 1.4rem; font-weight: bold; color: #2e8b57; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 5px; }
@@ -39,13 +42,8 @@
         .vazio { text-align: center; color: #777; margin-top: 50px; font-size: 1.1rem; }
 
         #box-pix {
-            background: #f9f9fb;
-            border: 2px dashed #5b0e8d;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-            display: none;
+            background: #f9f9fb; border: 2px dashed #5b0e8d; padding: 20px;
+            border-radius: 10px; text-align: center; margin-bottom: 20px; display: none;
         }
         #qrcode-container { display: flex; justify-content: center; margin: 15px 0; }
         .input-copia-cola { background: #fff; font-size: 0.85rem; text-align: center; cursor: pointer; }
@@ -62,7 +60,6 @@
     <div class="container">
         <div id="lista-itens"></div>
 
-        <!-- RESUMO DE VALORES COM TAXA DE ENTREGA -->
         <div class="resumo-valores" id="bloco-resumo-valores">
             <div class="linha-resumo">
                 <span>Subtotal dos Itens:</span>
@@ -83,17 +80,13 @@
             <input type="text" id="cli-nome" placeholder="Seu Nome Completo" required>
             <input type="tel" id="cli-whatsapp" placeholder="WhatsApp (DDD + Número)" required>
             
-            <!-- SELETOR DE BAIRROS -->
-            <label for="cli-bairro" style="font-weight: 600; font-size: 0.9rem; color: #555; display: block; margin-bottom: 5px;">Selecione o Bairro:</label>
-            <select id="cli-bairro" onchange="atualizarTotalGeral()">
-                <option value="" disabled selected>Carregando bairros...</option>
-            </select>
+            <button type="button" class="btn-gps" onclick="usarMinhaLocalizacao()">📍 Usar minha localização atual (GPS)</button>
 
-            <input type="text" id="cli-endereco" placeholder="Rua, Número e Complemento / Ponto de Referência" required>
+            <input type="text" id="cli-endereco" placeholder="Endereço Completo (Rua, Número, Bairro e Cidade)" required onblur="analisarEnderecoDigitado()">
             
             <h3>💳 Forma de Pagamento</h3>
             <select id="cli-pagamento" onchange="verificarPagamento()">
-                <option value="pix">PIX Dinâmico (Mercado Pago)</option>
+                <option value="pix">PIX</option>
                 <option value="cartao">Cartão de Crédito/Débito na Entrega</option>
                 <option value="dinheiro">Dinheiro na Entrega</option>
             </select>
@@ -113,7 +106,7 @@
     <script>
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
         let subtotalGlobal = 0;
-        let taxaEntregaGlobal = 0;
+        let taxaEntregaGlobal = 2.00; // Taxa padrão inicial caso não ache bairro
         let totalGlobal = 0;
         let listaBairros = [];
 
@@ -165,54 +158,79 @@
                 container.appendChild(divItem);
             });
 
-            // Carregar bairros do banco
-            await carregarBairros();
+            await buscarListaBairrosDoBanco();
+            atualizarTotalGeral();
         }
 
-        async function carregarBairros() {
+        async function buscarListaBairrosDoBanco() {
             try {
                 const resposta = await fetch('/api/bairros.php');
                 listaBairros = await resposta.json();
-
-                const selectBairro = document.getElementById('cli-bairro');
-                selectBairro.innerHTML = '<option value="" disabled selected>Selecione o seu bairro...</option>';
-
-                listaBairros.forEach(b => {
-                    const opt = document.createElement('option');
-                    opt.value = b.id;
-                    opt.setAttribute('data-taxa', b.taxa);
-                    opt.innerText = `${b.nome} (Taxa: R$ ${b.taxa.toFixed(2).replace('.', ',')})`;
-                    selectBairro.appendChild(opt);
-                });
-
-                // Seleciona o primeiro por padrão se houver
-                if (listaBairros.length > 0) {
-                    selectBairro.selectedIndex = 1;
-                }
-
-                atualizarTotalGeral();
-
             } catch (erro) {
-                console.error("Erro ao carregar bairros:", erro);
-                document.getElementById('cli-bairro').innerHTML = '<option value="">Erro ao carregar bairros</option>';
+                console.error("Erro ao carregar tabela de bairros:", erro);
+                listaBairros = [];
             }
         }
 
-        function atualizarTotalGeral() {
-            const selectBairro = document.getElementById('cli-bairro');
-            const optionSelecionada = selectBairro.options[selectBairro.selectedIndex];
-            
-            taxaEntregaGlobal = optionSelecionada && optionSelecionada.getAttribute('data-taxa') 
-                ? parseFloat(optionSelecionada.getAttribute('data-taxa')) 
-                : 0;
+        // Analisa o texto do endereço digitado para ver se cruza com algum bairro do banco
+        function analisarEnderecoDigitado() {
+            const enderecoTexto = document.getElementById('cli-endereco').value.toLowerCase();
+            let taxaEncontrada = 2.00; // Padrão de segurança se não achar nenhum
 
+            if (listaBairros && listaBairros.length > 0) {
+                for (let b of listaBairros) {
+                    if (enderecoTexto.includes(b.nome.toLowerCase())) {
+                        taxaEncontrada = parseFloat(b.taxa);
+                        break;
+                    }
+                }
+            }
+
+            taxaEntregaGlobal = taxaEncontrada;
+            atualizarTotalGeral();
+        }
+
+        // Função de Geolocalização por GPS via Nominatim (OpenStreetMap)
+        function usarMinhaLocalizacao() {
+            if (!navigator.geolocation) {
+                alert("Seu navegador não suporta geolocalização.");
+                return;
+            }
+
+            alert("Buscando sua localização... Por favor, permita o acesso ao GPS.");
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                try {
+                    const resposta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=pt-BR`);
+                    const dados = await resposta.json();
+
+                    if (dados && dados.display_name) {
+                        document.getElementById('cli-endereco').value = dados.display_name;
+                        analisarEnderecoDigitado();
+                        alert("Endereço preenchido com sucesso!");
+                    } else {
+                        alert("Não foi possível determinar o endereço exato.");
+                    }
+                } catch (e) {
+                    console.error("Erro no GPS reverso:", e);
+                    alert("Erro ao consultar serviço de mapas.");
+                }
+            }, (erro) => {
+                alert("Não foi possível obter sua localização. Verifique as permissões do navegador.");
+            });
+        }
+
+        function atualizarTotalGeral() {
             totalGlobal = subtotalGlobal + taxaEntregaGlobal;
 
             document.getElementById('txt-subtotal').innerText = subtotalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('txt-taxa').innerText = taxaEntregaGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('txt-total').innerText = totalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            verificarPagamento(); // Atualiza o Pix com o novo valor total (incluindo a taxa)
+            verificarPagamento();
         }
 
         function mudarQtdItem(index, delta) {
@@ -263,7 +281,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        total: totalGlobal, // Envia o total já com a taxa de entrega inclusa!
+                        total: totalGlobal,
                         cliente_nome: nomeCliente
                     })
                 });
@@ -293,19 +311,15 @@
         async function finalizarPedido() {
             const nome = document.getElementById('cli-nome').value.trim();
             const whatsapp = document.getElementById('cli-whatsapp').value.trim();
-            const selectBairro = document.getElementById('cli-bairro');
-            const bairroNome = selectBairro.options[selectBairro.selectedIndex].text.split(' (')[0];
-            const ruaEndereco = document.getElementById('cli-endereco').value.trim();
+            const endereco = document.getElementById('cli-endereco').value.trim();
             
             const selectPagamento = document.getElementById('cli-pagamento');
             const pagamento = selectPagamento.options[selectPagamento.selectedIndex].text;
 
-            if (!nome || !whatsapp || !selectBairro.value || !ruaEndereco) {
-                alert("Por favor, preencha todos os dados de entrega (incluindo o bairro) para prosseguir!");
+            if (!nome || !whatsapp || !endereco) {
+                alert("Por favor, preencha todos os dados de entrega para prosseguir!");
                 return;
             }
-
-            const enderecoCompleto = `${ruaEndereco}, Bairro: ${bairroNome}`;
 
             const btn = document.querySelector('.btn-finalizar');
             btn.innerText = "Processando...";
@@ -319,7 +333,7 @@
                     body: JSON.stringify({
                         cliente_nome: nome,
                         cliente_telefone: whatsapp,
-                        endereco: enderecoCompleto,
+                        endereco: endereco,
                         forma_pagamento: pagamento,
                         total: totalGlobal,
                         itens: carrinho
@@ -334,13 +348,12 @@
                 console.warn("Aviso ao salvar no banco:", erro);
             }
 
-            const numeroLoja = "5519999999999"; 
+            const numeroLoja = "5519993857689"; 
 
             let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
             textoMsg += `*Cliente:* ${nome}\n`;
             textoMsg += `*Contato:* ${whatsapp}\n`;
-            textoMsg += `*Endereço:* ${ruaEndereco}\n`;
-            textoMsg += `*Bairro:* ${bairroNome}\n\n`;
+            textoMsg += `*Endereço de Entrega:* ${endereco}\n\n`;
             textoMsg += `*🛒 ITENS DO PEDIDO:*\n`;
 
             carrinho.forEach((item, index) => {
@@ -359,7 +372,7 @@
 
             textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
             textoMsg += `*Subtotal:* R$ ${subtotalGlobal.toFixed(2).replace('.', ',')}\n`;
-            textoMsg += `*Taxa de Entrega (${bairroNome}):* R$ ${taxaEntregaGlobal.toFixed(2).replace('.', ',')}\n`;
+            textoMsg += `*Taxa de Entrega:* R$ ${taxaEntregaGlobal.toFixed(2).replace('.', ',')}\n`;
             textoMsg += `*💳 Pagamento:* ${pagamento}\n`;
             textoMsg += `*💰 TOTAL GERAL: R$ ${totalGlobal.toFixed(2).replace('.', ',')}*\n`;
 

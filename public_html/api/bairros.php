@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
 // Ajuste o caminho do require_once caso seu arquivo de conexão esteja em outra pasta
-require_once __DIR__ . '/../conexao.php';
+require_once __DIR__ . '/../../conexao.php';
 
 try {
     // Verifica se a tabela bairros existe

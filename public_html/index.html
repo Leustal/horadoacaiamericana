@@ -58,7 +58,6 @@
             margin-top: 4px;
         }
 
-        /* Banner de Status da Loja (Aberto / Fechado) */
         #status-loja-banner {
             background: #fff;
             padding: 12px 20px;
@@ -79,15 +78,8 @@
             font-size: 0.85rem;
         }
 
-        .status-aberto {
-            background: #e6f4ea;
-            color: var(--success);
-        }
-
-        .status-fechado {
-            background: #fde8e8;
-            color: var(--danger);
-        }
+        .status-aberto { background: #e6f4ea; color: var(--success); }
+        .status-fechado { background: #fde8e8; color: var(--danger); }
 
         .ponto-status {
             width: 8px;
@@ -96,14 +88,8 @@
             display: inline-block;
         }
 
-        .status-aberto .ponto-status { background: var(--success); animation: pulse 1.5px infinite; }
+        .status-aberto .ponto-status { background: var(--success); }
         .status-fechado .ponto-status { background: var(--danger); }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 139, 87, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 139, 87, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 139, 87, 0); }
-        }
 
         .categorias-menu {
             display: flex;
@@ -118,9 +104,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
         }
 
-        .categorias-menu::-webkit-scrollbar {
-            display: none; 
-        }
+        .categorias-menu::-webkit-scrollbar { display: none; }
 
         .btn-categoria {
             background: #edf2f7;
@@ -135,11 +119,7 @@
             transition: all 0.2s ease;
         }
 
-        .btn-categoria:hover {
-            background: #e2e8f0;
-            color: var(--primary);
-        }
-
+        .btn-categoria:hover { background: #e2e8f0; color: var(--primary); }
         .btn-categoria.ativo {
             background: var(--primary);
             color: white;
@@ -174,10 +154,14 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
+        .produto-card.destaque {
+            border: 2px solid #ff4081;
+            background: linear-gradient(to right, #ffffff, #fff5f7);
+        }
+
         .produto-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-            border-color: rgba(91, 14, 141, 0.1);
         }
 
         .produto-imagem-container {
@@ -199,9 +183,7 @@
             object-fit: cover;
         }
 
-        .produto-info {
-            flex: 1;
-        }
+        .produto-info { flex: 1; }
 
         .produto-info h3 {
             font-size: 1.15rem;
@@ -242,48 +224,32 @@
             transition: background 0.2s;
         }
 
-        .produto-card:hover .btn-selecionar {
-            background: var(--primary-soft-hover);
-        }
+        .produto-card:hover .btn-selecionar { background: var(--primary-soft-hover); }
 
         /* MODAL */
         #fundo-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(3px);
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 1000;
         }
         
         #modal-produto {
-            position: fixed;
-            bottom: 0; left: 50%;
-            transform: translateX(-50%);
-            width: 100%; max-width: 600px;
-            background: #fff;
-            border-radius: 28px 28px 0 0;
-            padding: 30px;
-            z-index: 1001;
-            max-height: 85vh;
-            overflow-y: auto;
+            position: fixed; bottom: 0; left: 50%;
+            transform: translateX(-50%); width: 100%; max-width: 600px;
+            background: #fff; border-radius: 28px 28px 0 0; padding: 30px;
+            z-index: 1001; max-height: 85vh; overflow-y: auto;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
         }
 
         .escondido { display: none !important; }
 
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
         }
-
         .modal-header h2 { color: var(--primary); font-size: 1.4rem; }
 
         .btn-fechar {
-            background: #edf2f7; border: none;
-            width: 36px; height: 36px; border-radius: 50%;
-            font-size: 1.2rem; color: var(--text-muted); cursor: pointer;
+            background: #edf2f7; border: none; width: 36px; height: 36px;
+            border-radius: 50%; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
 
@@ -300,34 +266,23 @@
 
         .controle-qtd { display: flex; align-items: center; gap: 12px; }
         .btn-qtd {
-            background: var(--primary); color: white; border: none;
-            width: 32px; height: 32px; border-radius: 50%; font-weight: bold;
-            font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            background: var(--primary); color: white; border: none; width: 32px; height: 32px;
+            border-radius: 50%; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
         .span-qtd { font-weight: 700; font-size: 1.1rem; min-width: 20px; text-align: center; }
 
         .input-observacao {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            background: #f8fafc;
-            font-size: 0.95rem;
-            color: var(--text-main);
-            resize: none;
-            margin-top: 5px;
+            width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0;
+            border-radius: 12px; background: #f8fafc; font-size: 0.95rem; color: var(--text-main);
+            resize: none; margin-top: 5px;
         }
-        .input-observacao:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: #fff;
-        }
+        .input-observacao:focus { outline: none; border-color: var(--primary); background: #fff; }
 
         .btn-adicionar-carrinho {
-            width: 100%; background: var(--primary); color: white;
-            padding: 16px; border: none; border-radius: 14px;
-            font-size: 1.1rem; font-weight: 700; margin-top: 25px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(91, 14, 141, 0.3);
+            width: 100%; background: var(--primary); color: white; padding: 16px;
+            border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 700;
+            margin-top: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(91, 14, 141, 0.3);
         }
         .btn-adicionar-carrinho:hover { background: var(--primary-light); }
 
@@ -355,7 +310,6 @@
         <p>O melhor açaí da região, fresquinho e montado do seu jeito!</p>
     </header>
 
-    <!-- BANNER DE STATUS DA LOJA -->
     <div id="status-loja-banner">
         <span id="texto-horario" style="color: var(--text-muted);">Horário: 14:00 às 23:00</span>
         <div id="badge-status" class="status-badge status-aberto">
@@ -408,25 +362,19 @@
 
     <script>
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
-        let lojaAbertaGlobal = true; // Variável de controle de expediente
+        let lojaAbertaGlobal = true;
 
-        // Configuração de Horário de Funcionamento
         function verificarHorarioLoja() {
             const badge = document.getElementById('badge-status');
             const label = document.getElementById('label-status');
 
-            // ⚠️ Defina aqui os horários de funcionamento (Ex: Aberto das 14:00 às 23:59)
             const horaAbertura = 14; 
             const horaFechamento = 23; 
 
             const agora = new Date();
             const horaAtual = agora.getHours();
-            const minutoAtual = agora.getMinutes();
 
-            // Lógica simples de horário (caso queira testar fechado, basta alterar a horaAtual)
-            // Aqui consideramos aberto das 14h às 23h59
             const estaAberto = horaAtual >= horaAbertura && horaAtual < horaFechamento;
-
             lojaAbertaGlobal = estaAberto;
 
             if (estaAberto) {
@@ -441,7 +389,19 @@
         async function carregarCardapio() {
             try {
                 const resposta = await fetch('/api/cardapio.php');
-                const cardapio = await resposta.json();
+                let cardapio = await resposta.json();
+
+                // ORDENAÇÃO INTELIGENTE: Joga "Mais Vendidos" / "Destaques" sempre para o primeiro lugar
+                cardapio.sort((a, b) => {
+                    const nomeA = a.categoria.toLowerCase();
+                    const nomeB = b.categoria.toLowerCase();
+                    const aDestaque = nomeA.includes('mais vendidos') || nomeA.includes('destaque') || nomeA.includes('favoritos');
+                    const bDestaque = nomeB.includes('mais vendidos') || nomeB.includes('destaque') || nomeB.includes('favoritos');
+
+                    if (aDestaque && !bDestaque) return -1;
+                    if (!aDestaque && bDestaque) return 1;
+                    return 0;
+                });
 
                 const menuCategorias = document.getElementById('categorias-menu');
                 const containerCardapio = document.getElementById('cardapio-container');
@@ -450,9 +410,13 @@
                 containerCardapio.innerHTML = '';
 
                 cardapio.forEach((categoria, index) => {
+                    const ehDestaque = categoria.categoria.toLowerCase().includes('mais vendidos') || 
+                                       categoria.categoria.toLowerCase().includes('destaque') ||
+                                       categoria.categoria.toLowerCase().includes('favoritos');
+
                     const btnCategoria = document.createElement('button');
                     btnCategoria.className = `btn-categoria ${index === 0 ? 'ativo' : ''}`;
-                    btnCategoria.innerText = categoria.categoria;
+                    btnCategoria.innerText = ehDestaque ? `🔥 ${categoria.categoria}` : categoria.categoria;
                     
                     btnCategoria.onclick = () => {
                         document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('ativo'));
@@ -469,7 +433,7 @@
                     secao.style.paddingTop = '130px'; 
                     secao.style.marginTop = '-110px'; 
                     
-                    secao.innerHTML = `<div class="secao-categoria-titulo">${categoria.categoria}</div>`;
+                    secao.innerHTML = `<div class="secao-categoria-titulo">${ehDestaque ? '🔥 ' : ''}${categoria.categoria}</div>`;
 
                     categoria.produtos.forEach(produto => {
                         const menorPreco = Math.min(...produto.tamanhos.map(t => t.preco));
@@ -477,13 +441,14 @@
                         const imagemUrl = produto.imagem || 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=150&q=80';
 
                         const cardProduto = document.createElement('div');
-                        cardProduto.className = 'produto-card';
+                        cardProduto.className = ehDestaque ? 'produto-card destaque' : 'produto-card';
+                        
                         cardProduto.innerHTML = `
                             <div class="produto-imagem-container">
                                 <img src="${imagemUrl}" alt="${produto.nome}">
                             </div>
                             <div class="produto-info">
-                                <h3>${produto.nome}</h3>
+                                <h3>${produto.nome} ${ehDestaque ? '<span style="font-size:0.75rem; background:#ff4081; color:white; padding:2px 6px; border-radius:6px; margin-left:6px; vertical-align:middle;">Mais Pedido</span>' : ''}</h3>
                                 <p>${produto.descricao}</p>
                             </div>
                             <div class="produto-acao-preco">
@@ -530,7 +495,9 @@
             const aceitaComplementos = nomeCategoria && (
                 nomeCategoria.toLowerCase().includes('açaí') || 
                 nomeCategoria.toLowerCase().includes('acai') || 
-                nomeCategoria.toLowerCase().includes('milkshake')
+                nomeCategoria.toLowerCase().includes('milkshake') ||
+                nomeCategoria.toLowerCase().includes('destaque') ||
+                nomeCategoria.toLowerCase().includes('mais vendidos')
             );
 
             if (!aceitaComplementos) {
@@ -655,6 +622,7 @@
             document.getElementById('qtd-itens-carrinho').innerText = `${qtdTotalItens} ${textoItem}`;
             document.getElementById('total-carrinho').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
+            barra.classList.add('escondido'); // Mantém visível se houver itens
             barra.classList.remove('escondido');
         }
 

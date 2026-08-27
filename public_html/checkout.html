@@ -27,9 +27,14 @@
 
         .secao-form { margin-top: 25px; }
         .secao-form h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        input, select { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
         
-        .btn-gps { background: #edf2f7; color: #5b0e8d; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 15px; width: 100%; transition: background 0.2s; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px 14px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        
+        .linha-dupla { display: flex; gap: 12px; }
+        .linha-dupla > div { flex: 1; }
+
+        .btn-gps { background: #edf2f7; color: #5b0e8d; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 15px; width: 100%; transition: background 0.2s; }
         .btn-gps:hover { background: #e2e8f0; }
 
         .resumo-valores { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
@@ -77,16 +82,36 @@
 
         <div class="secao-form" id="formulario-entrega">
             <h3>📍 Dados da Entrega</h3>
-            <input type="text" id="cli-nome" placeholder="Seu Nome Completo" required>
-            <input type="tel" id="cli-whatsapp" placeholder="WhatsApp (DDD + Número)" required>
             
-            <button type="button" class="btn-gps" onclick="usarMinhaLocalizacao()">📍 Usar minha localização atual (GPS)</button>
+            <label for="cli-nome">Nome Completo</label>
+            <input type="text" id="cli-nome" placeholder="Digite seu nome completo" required>
+            
+            <label for="cli-whatsapp">WhatsApp (com DDD)</label>
+            <input type="tel" id="cli-whatsapp" placeholder="Ex: 19999999999" required>
+            
+            <button type="button" class="btn-gps" onclick="usarMinhaLocalizacao()">📍 Preencher automaticamente via GPS</button>
 
-            <input type="text" id="cli-endereco" placeholder="Endereço Completo (Rua, Número, Bairro e Cidade)" required onblur="analisarEnderecoDigitado()">
+            <!-- CAMPOS INDIVIDUAIS E SEPARADOS -->
+            <label for="cli-rua">Rua / Avenida</label>
+            <input type="text" id="cli-rua" placeholder="Ex: Rua das Flores" required>
+
+            <div class="linha-dupla">
+                <div>
+                    <label for="cli-numero">Número</label>
+                    <input type="text" id="cli-numero" placeholder="Ex: 123" required>
+                </div>
+                <div>
+                    <label for="cli-bairro">Bairro</label>
+                    <input type="text" id="cli-bairro" placeholder="Ex: São Manuel" required onblur="analisarTaxaEntrega()">
+                </div>
+            </div>
+
+            <label for="cli-complemento">Complemento / Ponto de Referência (Opcional)</label>
+            <input type="text" id="cli-complemento" placeholder="Ex: Apto 42, Bloco B, Próximo ao mercado">
             
             <h3>💳 Forma de Pagamento</h3>
             <select id="cli-pagamento" onchange="verificarPagamento()">
-                <option value="pix">PIX</option>
+                <option value="pix">PIX Dinâmico (Mercado Pago)</option>
                 <option value="cartao">Cartão de Crédito/Débito na Entrega</option>
                 <option value="dinheiro">Dinheiro na Entrega</option>
             </select>
@@ -106,7 +131,7 @@
     <script>
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
         let subtotalGlobal = 0;
-        let taxaEntregaGlobal = 2.00; // Taxa padrão inicial caso não ache bairro
+        let taxaEntregaGlobal = 2.00; // Taxa padrão caso o bairro não esteja na lista
         let totalGlobal = 0;
         let listaBairros = [];
 
@@ -159,7 +184,7 @@
             });
 
             await buscarListaBairrosDoBanco();
-            atualizarTotalGeral();
+            analisarTaxaEntrega();
         }
 
         async function buscarListaBairrosDoBanco() {
@@ -172,14 +197,14 @@
             }
         }
 
-        // Analisa o texto do endereço digitado para ver se cruza com algum bairro do banco
-        function analisarEnderecoDigitado() {
-            const enderecoTexto = document.getElementById('cli-endereco').value.toLowerCase();
-            let taxaEncontrada = 2.00; // Padrão de segurança se não achar nenhum
+        // Verifica o campo "Bairro" para calcular a taxa automaticamente
+        function analisarTaxaEntrega() {
+            const bairroDigitado = document.getElementById('cli-bairro').value.toLowerCase().trim();
+            let taxaEncontrada = 2.00; // Padrão se não achar na lista do banco
 
-            if (listaBairros && listaBairros.length > 0) {
+            if (bairroDigitado && listaBairros && listaBairros.length > 0) {
                 for (let b of listaBairros) {
-                    if (enderecoTexto.includes(b.nome.toLowerCase())) {
+                    if (b.nome.toLowerCase().includes(bairroDigitado) || bairroDigitado.includes(b.nome.toLowerCase())) {
                         taxaEncontrada = parseFloat(b.taxa);
                         break;
                     }
@@ -190,29 +215,34 @@
             atualizarTotalGeral();
         }
 
-        // Função de Geolocalização por GPS via Nominatim (OpenStreetMap)
+        // Preenchimento automático via GPS separando cada dado em seu respectivo campo
         function usarMinhaLocalizacao() {
             if (!navigator.geolocation) {
                 alert("Seu navegador não suporta geolocalização.");
                 return;
             }
 
-            alert("Buscando sua localização... Por favor, permita o acesso ao GPS.");
+            alert("Buscando sua localização precisa...");
 
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
 
                 try {
-                    const resposta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=pt-BR`);
+                    const resposta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=pt-BR`);
                     const dados = await resposta.json();
 
-                    if (dados && dados.display_name) {
-                        document.getElementById('cli-endereco').value = dados.display_name;
-                        analisarEnderecoDigitado();
-                        alert("Endereço preenchido com sucesso!");
+                    if (dados && dados.address) {
+                        const addr = dados.address;
+                        
+                        document.getElementById('cli-rua').value = addr.road || addr.pedestrian || addr.suburb || '';
+                        document.getElementById('cli-numero').value = addr.house_number || '';
+                        document.getElementById('cli-bairro').value = addr.neighbourhood || addr.suburb || addr.city_district || '';
+                        
+                        analisarTaxaEntrega();
+                        alert("Endereço preenchido com sucesso! Verifique os campos.");
                     } else {
-                        alert("Não foi possível determinar o endereço exato.");
+                        alert("Não foi possível detalhar o endereço exato.");
                     }
                 } catch (e) {
                     console.error("Erro no GPS reverso:", e);
@@ -311,15 +341,21 @@
         async function finalizarPedido() {
             const nome = document.getElementById('cli-nome').value.trim();
             const whatsapp = document.getElementById('cli-whatsapp').value.trim();
-            const endereco = document.getElementById('cli-endereco').value.trim();
+            const rua = document.getElementById('cli-rua').value.trim();
+            const numero = document.getElementById('cli-numero').value.trim();
+            const bairro = document.getElementById('cli-bairro').value.trim();
+            const complemento = document.getElementById('cli-complemento').value.trim();
             
             const selectPagamento = document.getElementById('cli-pagamento');
             const pagamento = selectPagamento.options[selectPagamento.selectedIndex].text;
 
-            if (!nome || !whatsapp || !endereco) {
-                alert("Por favor, preencha todos os dados de entrega para prosseguir!");
+            if (!nome || !whatsapp || !rua || !numero || !bairro) {
+                alert("Por favor, preencha todos os campos obrigatórios de endereço (Rua, Número e Bairro)!");
                 return;
             }
+
+            // Monta o endereço formatado para salvar no banco ou enviar na mensagem
+            const enderecoFormatado = `${rua}, nº ${numero} - Bairro: ${bairro}${complemento ? ' (' + complemento + ')' : ''}`;
 
             const btn = document.querySelector('.btn-finalizar');
             btn.innerText = "Processando...";
@@ -333,7 +369,7 @@
                     body: JSON.stringify({
                         cliente_nome: nome,
                         cliente_telefone: whatsapp,
-                        endereco: endereco,
+                        endereco: enderecoFormatado,
                         forma_pagamento: pagamento,
                         total: totalGlobal,
                         itens: carrinho
@@ -348,13 +384,15 @@
                 console.warn("Aviso ao salvar no banco:", erro);
             }
 
-            const numeroLoja = "5519993857689"; 
+            const numeroLoja = "5519999999999"; 
 
             let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
             textoMsg += `*Cliente:* ${nome}\n`;
             textoMsg += `*Contato:* ${whatsapp}\n`;
-            textoMsg += `*Endereço de Entrega:* ${endereco}\n\n`;
-            textoMsg += `*🛒 ITENS DO PEDIDO:*\n`;
+            textoMsg += `*Endereço:* ${rua}, nº ${numero}\n`;
+            textoMsg += `*Bairro:* ${bairro}\n`;
+            if(complemento) textoMsg += `*Complemento:* ${complemento}\n`;
+            textoMsg += `\n*🛒 ITENS DO PEDIDO:*\n`;
 
             carrinho.forEach((item, index) => {
                 let qtd = item.quantidade || 1;
@@ -372,7 +410,7 @@
 
             textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
             textoMsg += `*Subtotal:* R$ ${subtotalGlobal.toFixed(2).replace('.', ',')}\n`;
-            textoMsg += `*Taxa de Entrega:* R$ ${taxaEntregaGlobal.toFixed(2).replace('.', ',')}\n`;
+            textoMsg += `*Taxa de Entrega (${bairro}):* R$ ${taxaEntregaGlobal.toFixed(2).replace('.', ',')}\n`;
             textoMsg += `*💳 Pagamento:* ${pagamento}\n`;
             textoMsg += `*💰 TOTAL GERAL: R$ ${totalGlobal.toFixed(2).replace('.', ',')}*\n`;
 

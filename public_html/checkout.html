@@ -9,35 +9,38 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { max-width: 900px; margin: 0 auto; background: #f4f4f5; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
         
-        header { background-color: #4b0082; color: white; padding: 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
+        header { background-color: #5b0e8d; color: white; padding: 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
         .btn-voltar { color: white; text-decoration: none; font-weight: bold; margin-right: 15px; font-size: 1.5rem; }
         
         .container { padding: 30px; background: #fff; min-height: calc(100vh - 75px); }
         
         .item-carrinho { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .item-info { flex: 1; margin-right: 15px; }
-        .item-header { font-weight: bold; color: #4b0082; margin-bottom: 5px; font-size: 1.1rem; }
+        .item-header { font-weight: bold; color: #5b0e8d; margin-bottom: 5px; font-size: 1.1rem; }
         .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 4px; line-height: 1.4; }
         .item-obs { font-size: 0.85rem; color: #d97706; font-style: italic; margin-bottom: 8px; }
         .item-preco { font-weight: bold; color: #2e8b57; }
         
         .acoes-item { display: flex; align-items: center; gap: 10px; }
-        .btn-qtd-carrinho { background: #4b0082; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-qtd-carrinho { background: #5b0e8d; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-remover-item { color: #d9534f; background: none; border: none; cursor: pointer; font-size: 0.85rem; margin-top: 5px; text-decoration: underline; }
 
         .secao-form { margin-top: 25px; }
         .secao-form h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         input, select { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
         
+        .resumo-valores { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .linha-resumo { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 1rem; color: #4a5568; }
+        .linha-resumo.total { font-size: 1.4rem; font-weight: bold; color: #2e8b57; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 5px; }
+
         .btn-finalizar { width: 100%; background: #2e8b57; color: white; padding: 18px; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-finalizar:hover { background: #256f44; }
         
-        #resumo-total { font-size: 1.6rem; text-align: right; margin: 20px 0; color: #2e8b57; font-weight: bold; }
         .vazio { text-align: center; color: #777; margin-top: 50px; font-size: 1.1rem; }
 
         #box-pix {
             background: #f9f9fb;
-            border: 2px dashed #4b0082;
+            border: 2px dashed #5b0e8d;
             padding: 20px;
             border-radius: 10px;
             text-align: center;
@@ -46,7 +49,7 @@
         }
         #qrcode-container { display: flex; justify-content: center; margin: 15px 0; }
         .input-copia-cola { background: #fff; font-size: 0.85rem; text-align: center; cursor: pointer; }
-        .btn-copiar { background: #4b0082; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-copiar { background: #5b0e8d; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -59,23 +62,44 @@
     <div class="container">
         <div id="lista-itens"></div>
 
-        <div id="resumo-total">Total: R$ 0,00</div>
+        <!-- RESUMO DE VALORES COM TAXA DE ENTREGA -->
+        <div class="resumo-valores" id="bloco-resumo-valores">
+            <div class="linha-resumo">
+                <span>Subtotal dos Itens:</span>
+                <span id="txt-subtotal">R$ 0,00</span>
+            </div>
+            <div class="linha-resumo">
+                <span>Taxa de Entrega:</span>
+                <span id="txt-taxa">R$ 0,00</span>
+            </div>
+            <div class="linha-resumo total">
+                <span>Total a Pagar:</span>
+                <span id="txt-total">R$ 0,00</span>
+            </div>
+        </div>
 
         <div class="secao-form" id="formulario-entrega">
             <h3>📍 Dados da Entrega</h3>
             <input type="text" id="cli-nome" placeholder="Seu Nome Completo" required>
             <input type="tel" id="cli-whatsapp" placeholder="WhatsApp (DDD + Número)" required>
-            <input type="text" id="cli-endereco" placeholder="Rua, Número, Bairro e Ponto de Referência" required>
+            
+            <!-- SELETOR DE BAIRROS -->
+            <label for="cli-bairro" style="font-weight: 600; font-size: 0.9rem; color: #555; display: block; margin-bottom: 5px;">Selecione o Bairro:</label>
+            <select id="cli-bairro" onchange="atualizarTotalGeral()">
+                <option value="" disabled selected>Carregando bairros...</option>
+            </select>
+
+            <input type="text" id="cli-endereco" placeholder="Rua, Número e Complemento / Ponto de Referência" required>
             
             <h3>💳 Forma de Pagamento</h3>
             <select id="cli-pagamento" onchange="verificarPagamento()">
-                <option value="pix">PIX</option>
+                <option value="pix">PIX Dinâmico (Mercado Pago)</option>
                 <option value="cartao">Cartão de Crédito/Débito na Entrega</option>
                 <option value="dinheiro">Dinheiro na Entrega</option>
             </select>
 
             <div id="box-pix">
-                <h4 style="color: #4b0082; margin-bottom: 5px;">Pague com PIX Agora</h4>
+                <h4 style="color: #5b0e8d; margin-bottom: 5px;">Pague com PIX Agora</h4>
                 <p style="font-size: 0.85rem; color: #555;">Escaneie o QR Code abaixo ou clique no botão para copiar o código.</p>
                 <div id="qrcode-container"></div>
                 <input type="text" id="pix-copia-cola" class="input-copia-cola" readonly value="...">
@@ -88,31 +112,33 @@
 
     <script>
         let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
+        let subtotalGlobal = 0;
+        let taxaEntregaGlobal = 0;
         let totalGlobal = 0;
+        let listaBairros = [];
 
-        function carregarCarrinho() {
+        async function carregarCarrinhoEBairros() {
             const container = document.getElementById('lista-itens');
-            const resumoTotal = document.getElementById('resumo-total');
             const formEntrega = document.getElementById('formulario-entrega');
+            const blocoResumo = document.getElementById('bloco-resumo-valores');
             
             container.innerHTML = ''; 
-            totalGlobal = 0;
+            subtotalGlobal = 0;
 
             if (carrinho.length === 0) {
-                container.innerHTML = '<p class="vazio">Seu carrinho está vazio. 😕<br><br><a href="index.html" style="color: #4b0082; font-weight: bold;">Voltar ao Cardápio</a></p>';
-                resumoTotal.innerText = 'Total: R$ 0,00';
+                container.innerHTML = '<p class="vazio">Seu carrinho está vazio. 😕<br><br><a href="index.html" style="color: #5b0e8d; font-weight: bold;">Voltar ao Cardápio</a></p>';
                 formEntrega.style.display = 'none'; 
+                blocoResumo.style.display = 'none';
                 return;
             }
 
             formEntrega.style.display = 'block';
+            blocoResumo.style.display = 'block';
 
             carrinho.forEach((item, index) => {
                 let qtdItem = item.quantidade || 1;
-                let precoUnitarioTotal = item.precoTotal / qtdItem;
                 let subtotalItem = item.precoTotal;
-
-                totalGlobal += subtotalItem;
+                subtotalGlobal += subtotalItem;
 
                 let txtAdicionais = item.adicionais && item.adicionais.length > 0 
                     ? item.adicionais.map(a => a.nome).join(', ') 
@@ -139,8 +165,54 @@
                 container.appendChild(divItem);
             });
 
-            resumoTotal.innerText = 'Total: ' + totalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            verificarPagamento();
+            // Carregar bairros do banco
+            await carregarBairros();
+        }
+
+        async function carregarBairros() {
+            try {
+                const resposta = await fetch('/api/bairros.php');
+                listaBairros = await resposta.json();
+
+                const selectBairro = document.getElementById('cli-bairro');
+                selectBairro.innerHTML = '<option value="" disabled selected>Selecione o seu bairro...</option>';
+
+                listaBairros.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.setAttribute('data-taxa', b.taxa);
+                    opt.innerText = `${b.nome} (Taxa: R$ ${b.taxa.toFixed(2).replace('.', ',')})`;
+                    selectBairro.appendChild(opt);
+                });
+
+                // Seleciona o primeiro por padrão se houver
+                if (listaBairros.length > 0) {
+                    selectBairro.selectedIndex = 1;
+                }
+
+                atualizarTotalGeral();
+
+            } catch (erro) {
+                console.error("Erro ao carregar bairros:", erro);
+                document.getElementById('cli-bairro').innerHTML = '<option value="">Erro ao carregar bairros</option>';
+            }
+        }
+
+        function atualizarTotalGeral() {
+            const selectBairro = document.getElementById('cli-bairro');
+            const optionSelecionada = selectBairro.options[selectBairro.selectedIndex];
+            
+            taxaEntregaGlobal = optionSelecionada && optionSelecionada.getAttribute('data-taxa') 
+                ? parseFloat(optionSelecionada.getAttribute('data-taxa')) 
+                : 0;
+
+            totalGlobal = subtotalGlobal + taxaEntregaGlobal;
+
+            document.getElementById('txt-subtotal').innerText = subtotalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('txt-taxa').innerText = taxaEntregaGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('txt-total').innerText = totalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            verificarPagamento(); // Atualiza o Pix com o novo valor total (incluindo a taxa)
         }
 
         function mudarQtdItem(index, delta) {
@@ -156,13 +228,13 @@
             }
 
             localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
-            carregarCarrinho();
+            carregarCarrinhoEBairros();
         }
 
         function removerItemCompleto(index) {
             carrinho.splice(index, 1);
             localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
-            carregarCarrinho();
+            carregarCarrinhoEBairros();
         }
 
         async function verificarPagamento() {
@@ -191,7 +263,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        total: totalGlobal,
+                        total: totalGlobal, // Envia o total já com a taxa de entrega inclusa!
                         cliente_nome: nomeCliente
                     })
                 });
@@ -221,15 +293,19 @@
         async function finalizarPedido() {
             const nome = document.getElementById('cli-nome').value.trim();
             const whatsapp = document.getElementById('cli-whatsapp').value.trim();
-            const endereco = document.getElementById('cli-endereco').value.trim();
+            const selectBairro = document.getElementById('cli-bairro');
+            const bairroNome = selectBairro.options[selectBairro.selectedIndex].text.split(' (')[0];
+            const ruaEndereco = document.getElementById('cli-endereco').value.trim();
             
             const selectPagamento = document.getElementById('cli-pagamento');
             const pagamento = selectPagamento.options[selectPagamento.selectedIndex].text;
 
-            if (!nome || !whatsapp || !endereco) {
-                alert("Por favor, preencha todos os dados de entrega para prosseguir!");
+            if (!nome || !whatsapp || !selectBairro.value || !ruaEndereco) {
+                alert("Por favor, preencha todos os dados de entrega (incluindo o bairro) para prosseguir!");
                 return;
             }
+
+            const enderecoCompleto = `${ruaEndereco}, Bairro: ${bairroNome}`;
 
             const btn = document.querySelector('.btn-finalizar');
             btn.innerText = "Processando...";
@@ -243,7 +319,7 @@
                     body: JSON.stringify({
                         cliente_nome: nome,
                         cliente_telefone: whatsapp,
-                        endereco: endereco,
+                        endereco: enderecoCompleto,
                         forma_pagamento: pagamento,
                         total: totalGlobal,
                         itens: carrinho
@@ -263,7 +339,8 @@
             let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
             textoMsg += `*Cliente:* ${nome}\n`;
             textoMsg += `*Contato:* ${whatsapp}\n`;
-            textoMsg += `*Endereço:* ${endereco}\n\n`;
+            textoMsg += `*Endereço:* ${ruaEndereco}\n`;
+            textoMsg += `*Bairro:* ${bairroNome}\n\n`;
             textoMsg += `*🛒 ITENS DO PEDIDO:*\n`;
 
             carrinho.forEach((item, index) => {
@@ -281,8 +358,10 @@
             });
 
             textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
+            textoMsg += `*Subtotal:* R$ ${subtotalGlobal.toFixed(2).replace('.', ',')}\n`;
+            textoMsg += `*Taxa de Entrega (${bairroNome}):* R$ ${taxaEntregaGlobal.toFixed(2).replace('.', ',')}\n`;
             textoMsg += `*💳 Pagamento:* ${pagamento}\n`;
-            textoMsg += `*💰 TOTAL: R$ ${totalGlobal.toFixed(2).replace('.', ',')}*\n`;
+            textoMsg += `*💰 TOTAL GERAL: R$ ${totalGlobal.toFixed(2).replace('.', ',')}*\n`;
 
             const linkWhatsApp = `https://wa.me/${numeroLoja}?text=${encodeURIComponent(textoMsg)}`;
 
@@ -291,7 +370,7 @@
             window.location.href = 'index.html';
         }
 
-        document.addEventListener('DOMContentLoaded', carregarCarrinho);
+        document.addEventListener('DOMContentLoaded', carregarCarrinhoEBairros);
     </script>
 </body>
 </html>

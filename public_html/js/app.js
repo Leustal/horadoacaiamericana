@@ -1034,17 +1034,23 @@ document
 
                         return {
 
-                            id:
-                                adicional.id,
+                id:
+                    adicional.id,
 
-                            nome:
+                nome:
+                    adicional.nome,
 
-                                `${adicional.quantidade}x ${adicional.nome}`,
+                quantidade:
+                    adicional.quantidade,
 
-                            preco:
-                                precoTotal
+                precoUnitario:
+                    adicional.precoUnitario,
 
-                        };
+                preco:
+                    precoTotal
+
+            };
+
 
                     }
                 );

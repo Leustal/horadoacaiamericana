@@ -1,429 +1,784 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrinho - Hora do Açaí</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { max-width: 900px; margin: 0 auto; background: #f4f4f5; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        
-        header { background-color: #5b0e8d; color: white; padding: 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .btn-voltar { color: white; text-decoration: none; font-weight: bold; margin-right: 15px; font-size: 1.5rem; }
-        
-        .container { padding: 30px; background: #fff; min-height: calc(100vh - 75px); }
-        
-        .item-carrinho { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
-        .item-info { flex: 1; margin-right: 15px; }
-        .item-header { font-weight: bold; color: #5b0e8d; margin-bottom: 5px; font-size: 1.1rem; }
-        .item-detalhes { font-size: 0.9rem; color: #666; margin-bottom: 4px; line-height: 1.4; }
-        .item-obs { font-size: 0.85rem; color: #d97706; font-style: italic; margin-bottom: 8px; }
-        .item-preco { font-weight: bold; color: #2e8b57; }
-        
-        .acoes-item { display: flex; align-items: center; gap: 10px; }
-        .btn-qtd-carrinho { background: #5b0e8d; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-remover-item { color: #d9534f; background: none; border: none; cursor: pointer; font-size: 0.85rem; margin-top: 5px; text-decoration: underline; }
 
-        .secao-form { margin-top: 25px; }
-        .secao-form h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px 14px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        
-        .linha-dupla { display: flex; gap: 12px; }
-        .linha-dupla > div { flex: 1; }
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
 
-        .btn-gps { background: #edf2f7; color: #5b0e8d; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 15px; width: 100%; transition: background 0.2s; }
-        .btn-gps:hover { background: #e2e8f0; }
+    <title>Finalizar pedido | Hora do Açaí</title>
 
-        .resumo-valores { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .linha-resumo { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 1rem; color: #4a5568; }
-        .linha-resumo.total { font-size: 1.4rem; font-weight: bold; color: #2e8b57; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 5px; }
+    <meta
+        name="description"
+        content="Finalize seu pedido no Hora do Açaí Delivery."
+    >
 
-        .btn-finalizar { width: 100%; background: #2e8b57; color: white; padding: 18px; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-finalizar:hover { background: #256f44; }
-        
-        .vazio { text-align: center; color: #777; margin-top: 50px; font-size: 1.1rem; }
-
-        #box-pix {
-            background: #f9f9fb; border: 2px dashed #5b0e8d; padding: 20px;
-            border-radius: 10px; text-align: center; margin-bottom: 20px; display: none;
-        }
-        #qrcode-container { display: flex; justify-content: center; margin: 15px 0; }
-        .input-copia-cola { background: #fff; font-size: 0.85rem; text-align: center; cursor: pointer; }
-        .btn-copiar { background: #5b0e8d; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-    </style>
+    <link
+        rel="stylesheet"
+        href="css/checkout.css"
+    >
 </head>
+
 <body>
 
-    <header>
-        <a href="index.html" class="btn-voltar">←</a>
-        <h2>Finalizar Pedido</h2>
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="checkout-header">
+
+        <div class="header-container">
+
+            <button
+                type="button"
+                class="btn-voltar"
+                onclick="voltarParaCardapio()"
+                aria-label="Voltar para o cardápio"
+            >
+                ←
+            </button>
+
+            <div class="logo-area">
+
+                <div class="logo-icon">
+                    🍇
+                </div>
+
+                <div>
+                    <strong>Hora do Açaí</strong>
+                    <span>Finalizar pedido</span>
+                </div>
+
+            </div>
+
+        </div>
+
     </header>
 
-    <div class="container">
-        <div id="lista-itens"></div>
 
-        <div class="resumo-valores" id="bloco-resumo-valores">
-            <div class="linha-resumo">
-                <span>Subtotal dos Itens:</span>
-                <span id="txt-subtotal">R$ 0,00</span>
-            </div>
-            <div class="linha-resumo">
-                <span>Taxa de Entrega:</span>
-                <span id="txt-taxa">R$ 0,00</span>
-            </div>
-            <div class="linha-resumo total">
-                <span>Total a Pagar:</span>
-                <span id="txt-total">R$ 0,00</span>
-            </div>
-        </div>
+    <!-- =====================================================
+         CONTEÚDO
+    ====================================================== -->
 
-        <div class="secao-form" id="formulario-entrega">
-            <h3>📍 Dados da Entrega</h3>
-            
-            <label for="cli-nome">Nome Completo</label>
-            <input type="text" id="cli-nome" placeholder="Digite seu nome completo" required>
-            
-            <label for="cli-whatsapp">WhatsApp (com DDD)</label>
-            <input type="tel" id="cli-whatsapp" placeholder="Ex: 19999999999" required>
-            
-            <button type="button" class="btn-gps" onclick="usarMinhaLocalizacao()">📍 Preencher automaticamente via GPS</button>
+    <main class="checkout-container">
 
-            <label for="cli-rua">Rua / Avenida</label>
-            <input type="text" id="cli-rua" placeholder="Ex: Rua das Flores" required>
+        <!-- =================================================
+             INDICADOR DE ETAPAS
+        ================================================== -->
 
-            <div class="linha-dupla">
+        <div class="steps">
+
+            <div class="step active">
+                <span>1</span>
                 <div>
-                    <label for="cli-numero">Número</label>
-                    <input type="text" id="cli-numero" placeholder="Ex: 123" required>
-                </div>
-                <div>
-                    <label for="cli-bairro">Bairro</label>
-                    <input type="text" id="cli-bairro" placeholder="Ex: São Vito" required oninput="analisarTaxaEntrega()" onblur="analisarTaxaEntrega()">
+                    <strong>Pedido</strong>
+                    <small>Confira seus itens</small>
                 </div>
             </div>
 
-            <label for="cli-complemento">Complemento / Ponto de Referência (Opcional)</label>
-            <input type="text" id="cli-complemento" placeholder="Ex: Apto 42, Bloco B, Próximo ao mercado">
-            
-            <h3>💳 Forma de Pagamento</h3>
-            <select id="cli-pagamento" onchange="verificarPagamento()">
-                <option value="pix">PIX Dinâmico (Mercado Pago)</option>
-                <option value="cartao">Cartão de Crédito/Débito na Entrega</option>
-                <option value="dinheiro">Dinheiro na Entrega</option>
-            </select>
+            <div class="step-line"></div>
 
-            <div id="box-pix">
-                <h4 style="color: #5b0e8d; margin-bottom: 5px;">Pague com PIX Agora</h4>
-                <p style="font-size: 0.85rem; color: #555;">Escaneie o QR Code abaixo ou clique no botão para copiar o código.</p>
-                <div id="qrcode-container"></div>
-                <input type="text" id="pix-copia-cola" class="input-copia-cola" readonly value="...">
-                <button type="button" class="btn-copiar" onclick="copiarPix()">Copiar Código PIX</button>
+            <div class="step">
+                <span>2</span>
+                <div>
+                    <strong>Entrega</strong>
+                    <small>Seus dados</small>
+                </div>
             </div>
 
-            <button class="btn-finalizar" onclick="finalizarPedido()">Concluir Pedido no WhatsApp</button>
+            <div class="step-line"></div>
+
+            <div class="step">
+                <span>3</span>
+                <div>
+                    <strong>Pagamento</strong>
+                    <small>Finalize</small>
+                </div>
+            </div>
+
         </div>
+
+
+        <!-- =================================================
+             GRID PRINCIPAL
+        ================================================== -->
+
+        <div class="checkout-grid">
+
+
+            <!-- =================================================
+                 COLUNA ESQUERDA
+            ================================================== -->
+
+            <section class="checkout-main">
+
+
+                <!-- =================================================
+                     DADOS DO CLIENTE
+                ================================================== -->
+
+                <div class="checkout-card">
+
+                    <div class="card-title">
+
+                        <div class="title-icon">
+                            👤
+                        </div>
+
+                        <div>
+                            <h2>Seus dados</h2>
+                            <p>Precisamos dessas informações para entregar seu pedido.</p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+                        <div class="form-group full">
+
+                            <label for="clienteNome">
+                                Nome completo
+                            </label>
+
+                            <input
+                                type="text"
+                                id="clienteNome"
+                                name="nome"
+                                placeholder="Digite seu nome"
+                                autocomplete="name"
+                                maxlength="100"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="clienteTelefone">
+                                WhatsApp
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="clienteTelefone"
+                                name="telefone"
+                                placeholder="(00) 00000-0000"
+                                autocomplete="tel"
+                                maxlength="15"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="clienteEmail">
+                                E-mail
+                            </label>
+
+                            <input
+                                type="email"
+                                id="clienteEmail"
+                                name="email"
+                                placeholder="seuemail@email.com"
+                                autocomplete="email"
+                                maxlength="150"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ENDEREÇO
+                ================================================== -->
+
+                <div class="checkout-card">
+
+                    <div class="card-title">
+
+                        <div class="title-icon">
+                            📍
+                        </div>
+
+                        <div>
+                            <h2>Endereço de entrega</h2>
+                            <p>Informe onde devemos entregar seu pedido.</p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="bairro">
+                                Bairro
+                            </label>
+
+                            <select
+                                id="bairro"
+                                required
+                            >
+
+                                <option value="">
+                                    Selecione seu bairro
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="numero">
+                                Número
+                            </label>
+
+                            <input
+                                type="text"
+                                id="numero"
+                                placeholder="Nº"
+                                maxlength="10"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label for="endereco">
+                                Rua / Avenida
+                            </label>
+
+                            <input
+                                type="text"
+                                id="endereco"
+                                placeholder="Digite sua rua ou avenida"
+                                maxlength="150"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="complemento">
+                                Complemento
+                            </label>
+
+                            <input
+                                type="text"
+                                id="complemento"
+                                placeholder="Apto, bloco..."
+                                maxlength="100"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="referencia">
+                                Ponto de referência
+                            </label>
+
+                            <input
+                                type="text"
+                                id="referencia"
+                                placeholder="Ex.: próximo ao mercado"
+                                maxlength="150"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     PAGAMENTO
+                ================================================== -->
+
+                <div class="checkout-card">
+
+                    <div class="card-title">
+
+                        <div class="title-icon">
+                            💳
+                        </div>
+
+                        <div>
+                            <h2>Forma de pagamento</h2>
+                            <p>Escolha como deseja pagar.</p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="payment-options">
+
+
+                        <label class="payment-option">
+
+                            <input
+                                type="radio"
+                                name="pagamento"
+                                value="pix"
+                                checked
+                            >
+
+                            <div class="payment-content">
+
+                                <div class="payment-icon pix">
+                                    ◈
+                                </div>
+
+                                <div>
+
+                                    <strong>PIX</strong>
+
+                                    <span>
+                                        Pague pelo QR Code ou código copia e cola
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <div class="payment-check">
+                                ✓
+                            </div>
+
+                        </label>
+
+
+                        <label class="payment-option">
+
+                            <input
+                                type="radio"
+                                name="pagamento"
+                                value="dinheiro"
+                            >
+
+                            <div class="payment-content">
+
+                                <div class="payment-icon dinheiro">
+                                    💵
+                                </div>
+
+                                <div>
+
+                                    <strong>Dinheiro</strong>
+
+                                    <span>
+                                        Pagamento na entrega
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <div class="payment-check">
+                                ✓
+                            </div>
+
+                        </label>
+
+
+                        <label class="payment-option">
+
+                            <input
+                                type="radio"
+                                name="pagamento"
+                                value="cartao"
+                            >
+
+                            <div class="payment-content">
+
+                                <div class="payment-icon cartao">
+                                    💳
+                                </div>
+
+                                <div>
+
+                                    <strong>Cartão</strong>
+
+                                    <span>
+                                        Pagamento na entrega
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <div class="payment-check">
+                                ✓
+                            </div>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         TROCO
+                    ================================================== -->
+
+                    <div
+                        id="areaTroco"
+                        class="troco-area hidden"
+                    >
+
+                        <label for="trocoPara">
+                            Troco para quanto?
+                        </label>
+
+                        <div class="money-input">
+
+                            <span>R$</span>
+
+                            <input
+                                type="number"
+                                id="trocoPara"
+                                min="0"
+                                step="0.01"
+                                placeholder="0,00"
+                            >
+
+                        </div>
+
+                        <small>
+                            Informe o valor da nota que você irá entregar.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     OBSERVAÇÃO
+                ================================================== -->
+
+                <div class="checkout-card">
+
+                    <div class="card-title">
+
+                        <div class="title-icon">
+                            📝
+                        </div>
+
+                        <div>
+                            <h2>Observações</h2>
+                            <p>Alguma informação importante para o pedido?</p>
+                        </div>
+
+                    </div>
+
+                    <textarea
+                        id="observacaoPedido"
+                        rows="4"
+                        maxlength="500"
+                        placeholder="Ex.: tocar a campainha, deixar na portaria..."
+                    ></textarea>
+
+                </div>
+
+
+            </section>
+
+
+            <!-- =================================================
+                 RESUMO
+            ================================================== -->
+
+            <aside class="checkout-sidebar">
+
+                <div class="summary-card">
+
+                    <div class="summary-header">
+
+                        <h2>Seu pedido</h2>
+
+                        <button
+                            type="button"
+                            onclick="voltarParaCardapio()"
+                        >
+                            + adicionar
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="resumoItens"
+                        class="summary-items"
+                    >
+                        <!-- preenchido pelo JS -->
+                    </div>
+
+
+                    <div class="summary-divider"></div>
+
+
+                    <div class="summary-row">
+
+                        <span>Subtotal</span>
+
+                        <strong id="resumoSubtotal">
+                            R$ 0,00
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-row">
+
+                        <span>Taxa de entrega</span>
+
+                        <strong id="resumoEntrega">
+                            R$ 0,00
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-divider"></div>
+
+
+                    <div class="summary-total">
+
+                        <span>Total</span>
+
+                        <strong id="resumoTotal">
+                            R$ 0,00
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="btnFinalizar"
+                        class="btn-finalizar"
+                        onclick="finalizarPedido()"
+                    >
+
+                        <span id="textoFinalizar">
+                            Finalizar pedido
+                        </span>
+
+                        <span class="btn-arrow">
+                            →
+                        </span>
+
+                    </button>
+
+
+                    <div class="security-info">
+
+                        🔒
+                        <span>
+                            Seus dados são enviados com segurança.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </main>
+
+
+    <!-- =====================================================
+         MODAL PIX
+    ====================================================== -->
+
+    <div
+        id="modalPix"
+        class="modal-overlay hidden"
+    >
+
+        <div class="pix-modal">
+
+            <button
+                type="button"
+                class="modal-close"
+                onclick="fecharModalPix()"
+                aria-label="Fechar"
+            >
+                ×
+            </button>
+
+
+            <div class="pix-success-icon">
+                ✓
+            </div>
+
+
+            <h2>
+                Pedido criado!
+            </h2>
+
+            <p class="pix-subtitle">
+                Agora realize o pagamento via PIX para confirmar seu pedido.
+            </p>
+
+
+            <div class="pix-order">
+                Pedido <strong>#<span id="pixPedidoId">000</span></strong>
+            </div>
+
+
+            <div class="pix-value">
+
+                <span>Total</span>
+
+                <strong id="pixValor">
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+
+            <div class="qr-container">
+
+                <img
+                    id="pixQrCode"
+                    src=""
+                    alt="QR Code PIX"
+                >
+
+            </div>
+
+
+            <p class="pix-instruction">
+                Abra o aplicativo do seu banco e escaneie o QR Code.
+            </p>
+
+
+            <div class="copy-area">
+
+                <input
+                    type="text"
+                    id="pixCopiaCola"
+                    readonly
+                >
+
+                <button
+                    type="button"
+                    onclick="copiarPix()"
+                    id="btnCopiarPix"
+                >
+                    Copiar
+                </button>
+
+            </div>
+
+
+            <div
+                id="pixMensagemCopiado"
+                class="copiado hidden"
+            >
+                ✓ Código PIX copiado!
+            </div>
+
+
+            <div class="pix-status">
+
+                <span class="status-dot"></span>
+
+                <span>
+                    Aguardando pagamento...
+                </span>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="btn-continuar"
+                onclick="fecharModalPix()"
+            >
+                Continuar
+            </button>
+
+        </div>
+
     </div>
 
-    <script>
-        let carrinho = JSON.parse(localStorage.getItem('carrinhoAcai')) || [];
-        let subtotalGlobal = 0;
-        let taxaEntregaGlobal = 2.00; // Taxa padrão caso o bairro não esteja na lista
-        let totalGlobal = 0;
-        let listaBairros = [];
 
-        async function carregarCarrinhoEBairros() {
-            const container = document.getElementById('lista-itens');
-            const formEntrega = document.getElementById('formulario-entrega');
-            const blocoResumo = document.getElementById('bloco-resumo-valores');
-            
-            container.innerHTML = ''; 
-            subtotalGlobal = 0;
+    <!-- =====================================================
+         MODAL SUCESSO
+    ====================================================== -->
 
-            if (carrinho.length === 0) {
-                container.innerHTML = '<p class="vazio">Seu carrinho está vazio. 😕<br><br><a href="index.html" style="color: #5b0e8d; font-weight: bold;">Voltar ao Cardápio</a></p>';
-                formEntrega.style.display = 'none'; 
-                blocoResumo.style.display = 'none';
-                return;
-            }
+    <div
+        id="modalSucesso"
+        class="modal-overlay hidden"
+    >
 
-            formEntrega.style.display = 'block';
-            blocoResumo.style.display = 'block';
+        <div class="success-modal">
 
-            carrinho.forEach((item, index) => {
-                let qtdItem = item.quantidade || 1;
-                let subtotalItem = item.precoTotal;
-                subtotalGlobal += subtotalItem;
+            <div class="success-icon">
+                ✓
+            </div>
 
-                let txtAdicionais = item.adicionais && item.adicionais.length > 0 
-                    ? item.adicionais.map(a => a.nome).join(', ') 
-                    : 'Sem complementos';
+            <h2>
+                Pedido recebido!
+            </h2>
 
-                let txtObs = item.observacao ? `Obs: "${item.observacao}"` : '';
+            <p>
+                Seu pedido foi enviado para a cozinha.
+            </p>
 
-                const divItem = document.createElement('div');
-                divItem.className = 'item-carrinho';
-                divItem.innerHTML = `
-                    <div class="item-info">
-                        <div class="item-header">${item.nome} (${item.tamanhoNome})</div>
-                        <div class="item-detalhes">Complementos: ${txtAdicionais}</div>
-                        ${txtObs ? `<div class="item-obs">${txtObs}</div>` : ''}
-                        <div class="item-preco">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</div>
-                        <button class="btn-remover-item" onclick="removerItemCompleto(${index})">Remover item</button>
-                    </div>
-                    <div class="acoes-item">
-                        <button class="btn-qtd-carrinho" onclick="mudarQtdItem(${index}, -1)">-</button>
-                        <span style="font-weight: bold; min-width: 20px; text-align: center;">${qtdItem}</span>
-                        <button class="btn-qtd-carrinho" onclick="mudarQtdItem(${index}, 1)">+</button>
-                    </div>
-                `;
-                container.appendChild(divItem);
-            });
+            <div class="success-order">
+                Pedido <strong>#<span id="sucessoPedidoId">000</span></strong>
+            </div>
 
-            await buscarListaBairrosDoBanco();
-            analisarTaxaEntrega();
-        }
+            <button
+                type="button"
+                onclick="voltarInicio()"
+                class="btn-continuar"
+            >
+                Voltar ao cardápio
+            </button>
 
-        async function buscarListaBairrosDoBanco() {
-            try {
-                const resposta = await fetch('/api/bairros.php');
-                listaBairros = await resposta.json();
-            } catch (erro) {
-                console.error("Erro ao carregar tabela de bairros:", erro);
-                listaBairros = [];
-            }
-        }
+        </div>
 
-        // Remove acentos e padroniza o texto para comparar perfeitamente
-        function normalizarTexto(texto) {
-            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        }
+    </div>
 
-        function analisarTaxaEntrega() {
-            const bairroDigitado = normalizarTexto(document.getElementById('cli-bairro').value);
-            let taxaEncontrada = 2.00; // Padrão caso não ache na lista do banco
 
-            if (bairroDigitado && listaBairros && listaBairros.length > 0) {
-                for (let b of listaBairros) {
-                    const nomeBancoNorm = normalizarTexto(b.nome);
-                    if (nomeBancoNorm.includes(bairroDigitado) || bairroDigitado.includes(nomeBancoNorm)) {
-                        taxaEncontrada = parseFloat(b.taxa);
-                        break;
-                    }
-                }
-            }
+    <!-- =====================================================
+         TOAST
+    ====================================================== -->
 
-            taxaEntregaGlobal = taxaEncontrada;
-            atualizarTotalGeral();
-        }
+    <div
+        id="toast"
+        class="toast hidden"
+    ></div>
 
-        function usarMinhaLocalizacao() {
-            if (!navigator.geolocation) {
-                alert("Seu navegador não suporta geolocalização.");
-                return;
-            }
 
-            alert("Buscando sua localização precisa...");
+    <script src="js/app.js"></script>
 
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-
-                try {
-                    const resposta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=pt-BR`);
-                    const dados = await resposta.json();
-
-                    if (dados && dados.address) {
-                        const addr = dados.address;
-                        
-                        document.getElementById('cli-rua').value = addr.road || addr.pedestrian || addr.suburb || '';
-                        document.getElementById('cli-numero').value = addr.house_number || '';
-                        document.getElementById('cli-bairro').value = addr.neighbourhood || addr.suburb || addr.city_district || '';
-                        
-                        analisarTaxaEntrega();
-                        alert("Endereço preenchido com sucesso! Verifique os campos.");
-                    } else {
-                        alert("Não foi possível detalhar o endereço exato.");
-                    }
-                } catch (e) {
-                    console.error("Erro no GPS reverso:", e);
-                    alert("Erro ao consultar serviço de mapas.");
-                }
-            }, (erro) => {
-                alert("Não foi possível obter sua localização. Verifique as permissões do navegador.");
-            });
-        }
-
-        function atualizarTotalGeral() {
-            totalGlobal = subtotalGlobal + taxaEntregaGlobal;
-
-            document.getElementById('txt-subtotal').innerText = subtotalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('txt-taxa').innerText = taxaEntregaGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('txt-total').innerText = totalGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            verificarPagamento();
-        }
-
-        function mudarQtdItem(index, delta) {
-            if (!carrinho[index].quantidade) carrinho[index].quantidade = 1;
-            
-            let precoUnitarioItem = carrinho[index].precoTotal / carrinho[index].quantidade;
-            carrinho[index].quantidade += delta;
-
-            if (carrinho[index].quantidade <= 0) {
-                carrinho.splice(index, 1);
-            } else {
-                carrinho[index].precoTotal = precoUnitarioItem * carrinho[index].quantidade;
-            }
-
-            localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
-            carregarCarrinhoEBairros();
-        }
-
-        function removerItemCompleto(index) {
-            carrinho.splice(index, 1);
-            localStorage.setItem('carrinhoAcai', JSON.stringify(carrinho));
-            carregarCarrinhoEBairros();
-        }
-
-        async function verificarPagamento() {
-            const metodo = document.getElementById('cli-pagamento').value;
-            const boxPix = document.getElementById('box-pix');
-
-            if (metodo === 'pix') {
-                boxPix.style.display = 'block';
-                await gerarPixMercadoPago();
-            } else {
-                boxPix.style.display = 'none';
-            }
-        }
-
-        async function gerarPixMercadoPago() {
-            const containerQr = document.getElementById('qrcode-container');
-            const inputCopia = document.getElementById('pix-copia-cola');
-            
-            containerQr.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Gerando Pix no Mercado Pago...</p>';
-            inputCopia.value = "Aguarde gerando...";
-
-            const nomeCliente = document.getElementById('cli-nome').value || "Cliente Açaí";
-
-            try {
-                const resposta = await fetch('/api/gerar_pix.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        total: totalGlobal,
-                        cliente_nome: nomeCliente
-                    })
-                });
-
-                const dados = await resposta.json();
-
-                if (dados.sucesso) {
-                    containerQr.innerHTML = `<img src="data:image/png;base64,${dados.qr_code_base64}" alt="QR Code Pix" style="width: 180px; height: 180px;">`;
-                    inputCopia.value = dados.qr_code;
-                } else {
-                    containerQr.innerHTML = '<p style="color: red; font-size: 0.9rem;">Erro ao gerar Pix. Verifique o Token no PHP.</p>';
-                }
-            } catch (erro) {
-                console.error("Erro na requisição Pix:", erro);
-                containerQr.innerHTML = '<p style="color: red; font-size: 0.9rem;">Erro de conexão com a API.</p>';
-            }
-        }
-
-        function copiarPix() {
-            const inputCopia = document.getElementById('pix-copia-cola');
-            inputCopia.select();
-            inputCopia.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(inputCopia.value);
-            alert("Código Pix Copia e Cola copiado com sucesso!");
-        }
-
-        async function finalizarPedido() {
-            const nome = document.getElementById('cli-nome').value.trim();
-            const whatsapp = document.getElementById('cli-whatsapp').value.trim();
-            const rua = document.getElementById('cli-rua').value.trim();
-            const numero = document.getElementById('cli-numero').value.trim();
-            const bairro = document.getElementById('cli-bairro').value.trim();
-            const complemento = document.getElementById('cli-complemento').value.trim();
-            
-            const selectPagamento = document.getElementById('cli-pagamento');
-            const pagamento = selectPagamento.options[selectPagamento.selectedIndex].text;
-
-            if (!nome || !whatsapp || !rua || !numero || !bairro) {
-                alert("Por favor, preencha todos os campos obrigatórios de endereço (Rua, Número e Bairro)!");
-                return;
-            }
-
-            const enderecoFormatado = `${rua}, nº ${numero} - Bairro: ${bairro}${complemento ? ' (' + complemento + ')' : ''}`;
-
-            const btn = document.querySelector('.btn-finalizar');
-            btn.innerText = "Processando...";
-            btn.disabled = true;
-
-            let pedidoId = 'N/A';
-            try {
-                const resposta = await fetch('/api/pedidos.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cliente_nome: nome,
-                        cliente_telefone: whatsapp,
-                        endereco: enderecoFormatado,
-                        forma_pagamento: pagamento,
-                        total: totalGlobal,
-                        itens: carrinho
-                    })
-                });
-
-                const resultado = await resposta.json();
-                if (resultado.sucesso) {
-                    pedidoId = resultado.pedido_id;
-                }
-            } catch (erro) {
-                console.warn("Aviso ao salvar no banco:", erro);
-            }
-
-            const numeroLoja = "5519999999999"; 
-
-            let textoMsg = `🟣 *NOVO PEDIDO #${pedidoId} - HORA DO AÇAÍ* 🟣\n\n`;
-            textoMsg += `*Cliente:* ${nome}\n`;
-            textoMsg += `*Contato:* ${whatsapp}\n`;
-            textoMsg += `*Endereço:* ${rua}, nº ${numero}\n`;
-            textoMsg += `*Bairro:* ${bairro}\n`;
-            if(complemento) textoMsg += `*Complemento:* ${complemento}\n`;
-            textoMsg += `\n*🛒 ITENS DO PEDIDO:*\n`;
-
-            carrinho.forEach((item, index) => {
-                let qtd = item.quantidade || 1;
-                let txtAdicionais = item.adicionais && item.adicionais.length > 0 
-                    ? item.adicionais.map(a => a.nome).join(', ') 
-                    : 'Sem complementos';
-
-                textoMsg += `\n${index + 1}. *${qtd}x ${item.nome} (${item.tamanhoNome})*\n`;
-                textoMsg += `   ▫️ Adicionais: ${txtAdicionais}\n`;
-                if (item.observacao) {
-                    textoMsg += `   ▫️ ⚠️ *Obs:* ${item.observacao}\n`;
-                }
-                textoMsg += `   ▫️ R$ ${item.precoTotal.toFixed(2).replace('.', ',')}\n`;
-            });
-
-            textoMsg += `\n➖➖➖➖➖➖➖➖➖➖\n`;
-            textoMsg += `*Subtotal:* R$ ${subtotalGlobal.toFixed(2).replace('.', ',')}\n`;
-            textoMsg += `*Taxa de Entrega (${bairro}):* R$ ${taxaEntregaGlobal.toFixed(2).replace('.', ',')}\n`;
-            textoMsg += `*💳 Pagamento:* ${pagamento}\n`;
-            textoMsg += `*💰 TOTAL GERAL: R$ ${totalGlobal.toFixed(2).replace('.', ',')}*\n`;
-
-            const linkWhatsApp = `https://wa.me/${numeroLoja}?text=${encodeURIComponent(textoMsg)}`;
-
-            localStorage.removeItem('carrinhoAcai');
-            window.open(linkWhatsApp, '_blank');
-            window.location.href = 'index.html';
-        }
-
-        document.addEventListener('DOMContentLoaded', carregarCarrinhoEBairros);
-    </script>
 </body>
+
 </html>

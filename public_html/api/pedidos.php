@@ -1,394 +1,700 @@
 <?php
 
+declare(strict_types=1);
+
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../conexao.php';
 
 
-/* =====================================================
-   PERMITIR APENAS POST
-===================================================== */
+/*
+=====================================================
+ FUNÇÃO PADRÃO DE RESPOSTA
+=====================================================
+*/
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+function responder(array $dados, int $status = 200): never
+{
+    http_response_code($status);
 
-    http_response_code(405);
-
-    echo json_encode([
-        'sucesso' => false,
-        'mensagem' => 'Método não permitido.'
-    ]);
+    echo json_encode(
+        $dados,
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
 
     exit;
 }
 
 
-/* =====================================================
-   RECEBER JSON
-===================================================== */
+/*
+=====================================================
+ PERMITIR APENAS POST
+=====================================================
+*/
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
+    responder([
+        'sucesso' => false,
+        'mensagem' => 'Método não permitido.'
+    ], 405);
+}
+
+
+/*
+=====================================================
+ LER JSON
+=====================================================
+*/
 
 $conteudo = file_get_contents('php://input');
 
 $dados = json_decode($conteudo, true);
-
-
-/* =====================================================
-   VALIDAR JSON
-===================================================== */
 
 if (
     json_last_error() !== JSON_ERROR_NONE ||
     !is_array($dados)
 ) {
 
-    http_response_code(400);
-
-    echo json_encode([
+    responder([
         'sucesso' => false,
         'mensagem' => 'Dados inválidos.'
-    ]);
-
-    exit;
+    ], 400);
 }
 
 
-/* =====================================================
-   VALIDAR CAMPOS PRINCIPAIS
-===================================================== */
+/*
+=====================================================
+ RECEBER DADOS
+=====================================================
+*/
 
-$clienteId = $dados['cliente_id'] ?? null;
-
-$metodoPagamento = $dados['metodo_pagamento'] ?? '';
-
-$total = isset($dados['total'])
-    ? (float) $dados['total']
+$clienteId = isset($dados['cliente_id'])
+    ? (int) $dados['cliente_id']
     : 0;
 
-$trocoPara = isset($dados['troco_para'])
-    ? (float) $dados['troco_para']
-    : null;
+$metodoPagamento = isset($dados['metodo_pagamento'])
+    ? strtolower(trim((string) $dados['metodo_pagamento']))
+    : '';
 
 $itens = $dados['itens'] ?? [];
 
+$trocoPara = null;
 
 if (
-    !$clienteId ||
-    !$metodoPagamento ||
-    $total <= 0 ||
+    isset($dados['troco_para']) &&
+    $dados['troco_para'] !== '' &&
+    $dados['troco_para'] !== null
+) {
+
+    $trocoPara = (float) $dados['troco_para'];
+}
+
+
+/*
+=====================================================
+ VALIDAR DADOS PRINCIPAIS
+=====================================================
+*/
+
+if ($clienteId <= 0) {
+
+    responder([
+        'sucesso' => false,
+        'mensagem' => 'Cliente inválido.'
+    ], 422);
+}
+
+
+if (!in_array(
+    $metodoPagamento,
+    ['pix', 'cartao', 'dinheiro'],
+    true
+)) {
+
+    responder([
+        'sucesso' => false,
+        'mensagem' => 'Método de pagamento inválido.'
+    ], 422);
+}
+
+
+if (
     !is_array($itens) ||
     count($itens) === 0
 ) {
 
-    http_response_code(422);
-
-    echo json_encode([
+    responder([
         'sucesso' => false,
-        'mensagem' => 'Dados obrigatórios não preenchidos.'
-    ]);
-
-    exit;
+        'mensagem' => 'O pedido precisa possuir pelo menos um item.'
+    ], 422);
 }
 
 
-/* =====================================================
-   VALIDAR MÉTODO DE PAGAMENTO
-===================================================== */
-
-$metodosPermitidos = [
-    'pix',
-    'cartao',
-    'dinheiro'
-];
-
-if (!in_array($metodoPagamento, $metodosPermitidos)) {
-
-    http_response_code(422);
-
-    echo json_encode([
-        'sucesso' => false,
-        'mensagem' => 'Método de pagamento inválido.'
-    ]);
-
-    exit;
-}
-
-
-/* =====================================================
-   DEFINIR STATUS PAGAMENTO
-===================================================== */
-
-$statusPagamento = 'aguardando';
+/*
+=====================================================
+ VALIDAR TROCO
+=====================================================
+*/
 
 if ($metodoPagamento === 'dinheiro') {
 
-    $statusPagamento = 'aguardando';
+    if (
+        $trocoPara !== null &&
+        $trocoPara < 0
+    ) {
 
+        responder([
+            'sucesso' => false,
+            'mensagem' => 'Valor de troco inválido.'
+        ], 422);
+    }
+
+} else {
+
+    // Para PIX ou cartão não existe troco.
+    $trocoPara = null;
 }
 
 
-/* =====================================================
-   SALVAR PEDIDO
-===================================================== */
+/*
+=====================================================
+ INICIAR TRANSAÇÃO
+=====================================================
+*/
 
 try {
 
     $pdo->beginTransaction();
 
 
-    /* ===============================
-       CRIAR PEDIDO
-    =============================== */
+    /*
+    =====================================================
+     VALIDAR CLIENTE
+    =====================================================
+    */
+
+    $stmtCliente = $pdo->prepare("
+        SELECT
+            id,
+            nome,
+            telefone,
+            email
+        FROM clientes
+        WHERE id = :id
+        LIMIT 1
+    ");
+
+    $stmtCliente->execute([
+        ':id' => $clienteId
+    ]);
+
+    $cliente = $stmtCliente->fetch(PDO::FETCH_ASSOC);
+
+
+    if (!$cliente) {
+
+        throw new Exception('Cliente não encontrado.');
+    }
+
+
+    /*
+    =====================================================
+     PREPARAR INSERT DO PEDIDO
+    =====================================================
+    */
 
     $stmtPedido = $pdo->prepare("
-
         INSERT INTO pedidos (
-
             cliente_id,
             total,
             status,
             metodo_pagamento,
             status_pagamento,
             troco_para
-
         )
-
         VALUES (
-
             :cliente_id,
             :total,
             'pendente',
             :metodo_pagamento,
-            :status_pagamento,
+            'aguardando',
             :troco_para
-
         )
-
     ");
 
 
-    $stmtPedido->execute([
+    /*
+    =====================================================
+     IMPORTANTE
 
-        ':cliente_id' => $clienteId,
+     O total recebido do navegador NÃO é utilizado.
 
-        ':total' => $total,
+     O total será calculado com base nos produtos
+     e adicionais existentes no banco.
+    =====================================================
+    */
 
-        ':metodo_pagamento' => $metodoPagamento,
-
-        ':status_pagamento' => $statusPagamento,
-
-        ':troco_para' => $trocoPara
-
-    ]);
-
-
-    $pedidoId = $pdo->lastInsertId();
+    $totalPedido = 0.00;
 
 
-    /* ===============================
-       INSERIR ITENS
-    =============================== */
+    /*
+    =====================================================
+     PREPARAR CONSULTAS
+    =====================================================
+    */
 
-    $stmtItem = $pdo->prepare("
-
-        INSERT INTO itens_pedido (
-
-            pedido_id,
-            produto_tamanho_id,
-            quantidade,
-            preco_unitario,
-            observacoes
-
-        )
-
-        VALUES (
-
-            :pedido_id,
-            :produto_tamanho_id,
-            :quantidade,
-            :preco_unitario,
-            :observacoes
-
-        )
-
+    $stmtTamanho = $pdo->prepare("
+        SELECT
+            id,
+            preco
+        FROM produtos_tamanhos
+        WHERE id = :id
+        LIMIT 1
     ");
 
 
     $stmtAdicional = $pdo->prepare("
-
-        INSERT INTO itens_pedido_adicionais (
-
-            item_pedido_id,
-            adicional_id,
-            preco_adicional
-
-        )
-
-        VALUES (
-
-            :item_pedido_id,
-            :adicional_id,
-            :preco_adicional
-
-        )
-
+        SELECT
+            id,
+            preco,
+            ativo
+        FROM adicionais
+        WHERE id = :id
+        LIMIT 1
     ");
 
 
-    foreach ($itens as $item) {
+    /*
+    =====================================================
+     PRIMEIRA PASSAGEM
+     
+     Validar todos os itens e calcular o total real.
+    =====================================================
+    */
+
+    $itensProcessados = [];
 
 
-        $produtoTamanhoId =
-            $item['produto_tamanho_id'] ?? null;
+    foreach ($itens as $indice => $item) {
 
-        $quantidade =
-            isset($item['quantidade'])
-                ? (int) $item['quantidade']
-                : 1;
-
-        $precoUnitario =
-            isset($item['preco_unitario'])
-                ? (float) $item['preco_unitario']
-                : 0;
-
-        $observacoes =
-            $item['observacoes'] ?? null;
-
-
-        if (
-            !$produtoTamanhoId ||
-            $quantidade <= 0 ||
-            $precoUnitario < 0
-        ) {
+        if (!is_array($item)) {
 
             throw new Exception(
-                'Item do pedido inválido.'
+                'Item inválido na posição ' . $indice . '.'
             );
-
         }
 
 
-        $stmtItem->execute([
+        $produtoTamanhoId = isset($item['produto_tamanho_id'])
+            ? (int) $item['produto_tamanho_id']
+            : 0;
 
-            ':pedido_id' => $pedidoId,
 
-            ':produto_tamanho_id' =>
-                $produtoTamanhoId,
+        $quantidade = isset($item['quantidade'])
+            ? (int) $item['quantidade']
+            : 0;
 
-            ':quantidade' =>
-                $quantidade,
 
-            ':preco_unitario' =>
-                $precoUnitario,
+        $observacoes = isset($item['observacoes'])
+            ? trim((string) $item['observacoes'])
+            : null;
 
-            ':observacoes' =>
-                $observacoes
 
+        /*
+        -----------------------------------------------------
+         VALIDAR ITEM
+        -----------------------------------------------------
+        */
+
+        if ($produtoTamanhoId <= 0) {
+
+            throw new Exception(
+                'Tamanho de produto inválido.'
+            );
+        }
+
+
+        if ($quantidade <= 0) {
+
+            throw new Exception(
+                'Quantidade de produto inválida.'
+            );
+        }
+
+
+        /*
+        -----------------------------------------------------
+         BUSCAR PREÇO REAL DO BANCO
+        -----------------------------------------------------
+        */
+
+        $stmtTamanho->execute([
+            ':id' => $produtoTamanhoId
         ]);
 
-
-        $itemPedidoId =
-            $pdo->lastInsertId();
+        $tamanho = $stmtTamanho->fetch(PDO::FETCH_ASSOC);
 
 
-        /* ===============================
-           ADICIONAIS
-        =============================== */
+        if (!$tamanho) {
+
+            throw new Exception(
+                'Produto/tamanho não encontrado.'
+            );
+        }
+
+
+        $precoUnitario = (float) $tamanho['preco'];
+
+
+        /*
+        -----------------------------------------------------
+         CALCULAR ADICIONAIS
+        -----------------------------------------------------
+        */
+
+        $adicionaisProcessados = [];
+
+        $totalAdicionais = 0.00;
+
 
         if (
             isset($item['adicionais']) &&
             is_array($item['adicionais'])
         ) {
 
-            foreach (
-                $item['adicionais']
-                as $adicional
-            ) {
+            foreach ($item['adicionais'] as $adicional) {
 
-
-                $adicionalId =
-                    $adicional['adicional_id']
-                    ?? null;
-
-                $precoAdicional =
-                    isset(
-                        $adicional['preco_adicional']
-                    )
-                        ? (float)
-                            $adicional[
-                                'preco_adicional'
-                            ]
-                        : 0;
-
-
-                if (!$adicionalId) {
-
+                if (!is_array($adicional)) {
                     continue;
-
                 }
 
 
+                $adicionalId = isset($adicional['adicional_id'])
+                    ? (int) $adicional['adicional_id']
+                    : 0;
+
+
+                $quantidadeAdicional = isset(
+                    $adicional['quantidade']
+                )
+                    ? (int) $adicional['quantidade']
+                    : 1;
+
+
+                /*
+                Se o frontend não enviar quantidade,
+                consideramos 1.
+                */
+
+                if ($quantidadeAdicional <= 0) {
+                    $quantidadeAdicional = 1;
+                }
+
+
+                if ($adicionalId <= 0) {
+                    continue;
+                }
+
+
+                /*
+                -------------------------------------------------
+                 BUSCAR ADICIONAL NO BANCO
+                -------------------------------------------------
+                */
+
                 $stmtAdicional->execute([
-
-                    ':item_pedido_id' =>
-                        $itemPedidoId,
-
-                    ':adicional_id' =>
-                        $adicionalId,
-
-                    ':preco_adicional' =>
-                        $precoAdicional
-
+                    ':id' => $adicionalId
                 ]);
 
-            }
+                $dadosAdicional =
+                    $stmtAdicional->fetch(PDO::FETCH_ASSOC);
 
+
+                if (!$dadosAdicional) {
+
+                    throw new Exception(
+                        'Adicional não encontrado.'
+                    );
+                }
+
+
+                /*
+                -------------------------------------------------
+                 VERIFICAR SE ESTÁ ATIVO
+                -------------------------------------------------
+                */
+
+                if ((int) $dadosAdicional['ativo'] !== 1) {
+
+                    throw new Exception(
+                        'Um dos adicionais selecionados não está disponível.'
+                    );
+                }
+
+
+                $precoAdicionalUnitario =
+                    (float) $dadosAdicional['preco'];
+
+
+                $precoAdicionalTotal =
+                    $precoAdicionalUnitario *
+                    $quantidadeAdicional;
+
+
+                $totalAdicionais +=
+                    $precoAdicionalTotal;
+
+
+                $adicionaisProcessados[] = [
+                    'adicional_id' => $adicionalId,
+                    'preco_adicional' => $precoAdicionalUnitario
+                ];
+            }
         }
 
+
+        /*
+        -----------------------------------------------------
+         TOTAL DO ITEM
+        -----------------------------------------------------
+        */
+
+        $totalItem =
+            (
+                $precoUnitario +
+                $totalAdicionais
+            ) * $quantidade;
+
+
+        $totalPedido += $totalItem;
+
+
+        /*
+        -----------------------------------------------------
+         GUARDAR ITEM PROCESSADO
+        -----------------------------------------------------
+        */
+
+        $itensProcessados[] = [
+            'produto_tamanho_id' => $produtoTamanhoId,
+            'quantidade' => $quantidade,
+            'preco_unitario' => $precoUnitario,
+            'observacoes' => $observacoes,
+            'adicionais' => $adicionaisProcessados
+        ];
     }
 
 
-    /* ===============================
-       CONFIRMAR TRANSAÇÃO
-    =============================== */
+    /*
+    =====================================================
+     ARREDONDAMENTO DO TOTAL
+    =====================================================
+    */
+
+    $totalPedido = round($totalPedido, 2);
+
+
+    if ($totalPedido <= 0) {
+
+        throw new Exception(
+            'O valor total do pedido é inválido.'
+        );
+    }
+
+
+    /*
+    =====================================================
+     VALIDAR TROCO CONTRA O TOTAL
+    =====================================================
+    */
+
+    if ($metodoPagamento === 'dinheiro') {
+
+        if (
+            $trocoPara !== null &&
+            $trocoPara > 0 &&
+            $trocoPara < $totalPedido
+        ) {
+
+            throw new Exception(
+                'O valor informado para troco é menor que o total do pedido.'
+            );
+        }
+    }
+
+
+    /*
+    =====================================================
+     CRIAR PEDIDO
+    =====================================================
+    */
+
+    $stmtPedido->execute([
+        ':cliente_id' => $clienteId,
+        ':total' => $totalPedido,
+        ':metodo_pagamento' => $metodoPagamento,
+        ':troco_para' => $trocoPara
+    ]);
+
+
+    $pedidoId = (int) $pdo->lastInsertId();
+
+
+    /*
+    =====================================================
+     PREPARAR INSERT DOS ITENS
+    =====================================================
+    */
+
+    $stmtItem = $pdo->prepare("
+        INSERT INTO itens_pedido (
+            pedido_id,
+            produto_tamanho_id,
+            quantidade,
+            preco_unitario,
+            observacoes
+        )
+        VALUES (
+            :pedido_id,
+            :produto_tamanho_id,
+            :quantidade,
+            :preco_unitario,
+            :observacoes
+        )
+    ");
+
+
+    $stmtItemAdicional = $pdo->prepare("
+        INSERT INTO itens_pedido_adicionais (
+            item_pedido_id,
+            adicional_id,
+            preco_adicional
+        )
+        VALUES (
+            :item_pedido_id,
+            :adicional_id,
+            :preco_adicional
+        )
+    ");
+
+
+    /*
+    =====================================================
+     INSERIR ITENS
+    =====================================================
+    */
+
+    foreach ($itensProcessados as $item) {
+
+        $stmtItem->execute([
+            ':pedido_id' => $pedidoId,
+            ':produto_tamanho_id' =>
+                $item['produto_tamanho_id'],
+            ':quantidade' =>
+                $item['quantidade'],
+            ':preco_unitario' =>
+                $item['preco_unitario'],
+            ':observacoes' =>
+                $item['observacoes']
+        ]);
+
+
+        $itemPedidoId =
+            (int) $pdo->lastInsertId();
+
+
+        /*
+        -------------------------------------------------
+         INSERIR ADICIONAIS
+        -------------------------------------------------
+        */
+
+        foreach (
+            $item['adicionais']
+            as $adicional
+        ) {
+
+            $stmtItemAdicional->execute([
+                ':item_pedido_id' =>
+                    $itemPedidoId,
+
+                ':adicional_id' =>
+                    $adicional['adicional_id'],
+
+                ':preco_adicional' =>
+                    $adicional['preco_adicional']
+            ]);
+        }
+    }
+
+
+    /*
+    =====================================================
+     FINALIZAR TRANSAÇÃO
+    =====================================================
+    */
 
     $pdo->commit();
 
 
-    echo json_encode([
+    /*
+    =====================================================
+     RESPOSTA
+    =====================================================
+    */
 
+    responder([
         'sucesso' => true,
+        'pedido_id' => $pedidoId,
+        'total' => number_format(
+            $totalPedido,
+            2,
+            '.',
+            ''
+        ),
+        'metodo_pagamento' => $metodoPagamento,
+        'status_pagamento' => 'aguardando',
+        'mensagem' => 'Pedido criado com sucesso.'
+    ], 201);
 
-        'pedido_id' =>
-            (int) $pedidoId,
 
-        'mensagem' =>
-            'Pedido criado com sucesso.'
+} catch (Throwable $e) {
 
-    ]);
-
-
-} catch (Exception $e) {
-
+    /*
+    =====================================================
+     ROLLBACK
+    =====================================================
+    */
 
     if ($pdo->inTransaction()) {
-
         $pdo->rollBack();
-
     }
 
 
-    http_response_code(500);
+    /*
+    =====================================================
+     LOG INTERNO
+
+     O erro real não é enviado ao navegador.
+    =====================================================
+    */
+
+    error_log(
+        '[HORA DO ACAI] Erro em pedidos.php: ' .
+        $e->getMessage()
+    );
 
 
-    echo json_encode([
+    /*
+    =====================================================
+     RESPOSTA SEGURA
+    =====================================================
+    */
 
+    responder([
         'sucesso' => false,
-
-        'mensagem' =>
-            'Erro ao criar pedido.',
-
-        'detalhes' =>
-            $e->getMessage()
-
-    ]);
-
+        'mensagem' => 'Não foi possível criar o pedido. Tente novamente.'
+    ], 500);
 }
+
